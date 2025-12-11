@@ -49,6 +49,8 @@ knitr::opts_chunk$set(
   - Intermediate high: 75 ≤ MI < 100
   - High: MI ≥ 100
 
+- The pdf files generated in this analysis are saved in the "output" directory.
+
 # Visualizations
 
 ```{r load_issa}
