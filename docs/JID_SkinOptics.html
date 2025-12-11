@@ -514,15 +514,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreee11deee0b468394e1baa5088bdc0879af630710dtargetblanke11deeea">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree2fc3d0378113720092fc58ed7dc4154be7db6bcctargetblank2fc3d03a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/lasisilab/SkinOptics/tree/e11deee0b468394e1baa5088bdc0879af630710d" target="_blank">e11deee</a>
+<a href="https://github.com/lasisilab/SkinOptics/tree/2fc3d0378113720092fc58ed7dc4154be7db6bcc" target="_blank">2fc3d03</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreee11deee0b468394e1baa5088bdc0879af630710dtargetblanke11deeea"
+id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree2fc3d0378113720092fc58ed7dc4154be7db6bcctargetblank2fc3d03a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -532,7 +532,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/lasisilab/SkinOptics/tree/e11deee0b468394e1baa5088bdc0879af630710d" target="_blank">e11deee</a>.
+<a href="https://github.com/lasisilab/SkinOptics/tree/2fc3d0378113720092fc58ed7dc4154be7db6bcc" target="_blank">2fc3d03</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -551,12 +551,21 @@ Ignored files:
     Ignored:    .Rhistory
     Ignored:    .Rproj.user/
 
+Untracked files:
+    Untracked:  output/ei_sd_mi_correlation.pdf
+    Untracked:  output/facepalm_ei_mi_correlation.pdf
+
 Unstaged changes:
-    Modified:   analysis/.DS_Store
-    Deleted:    analysis/JID_MelaninSiteAttenuation.Rmd
-    Deleted:    analysis/issa-spectrum.Rmd
-    Deleted:    analysis/skin-reflectance.Rmd
-    Deleted:    analysis/sliding-window.Rmd
+    Modified:   output/absorbance_derivative_face.pdf
+    Modified:   output/absorbance_derivative_palm.pdf
+    Modified:   output/absorbance_mi_sd.pdf
+    Modified:   output/ei_mi_correlation.pdf
+    Modified:   output/heatmap.pdf
+    Modified:   output/mi_distribution.pdf
+    Modified:   output/reflectance_derivative_face.pdf
+    Modified:   output/reflectance_derivative_palm.pdf
+    Modified:   output/reflectance_mi_sd.pdf
+    Modified:   output/reflectance_mi_sd_regression.pdf
 
 </code></pre>
 <p>
@@ -601,6 +610,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/2fc3d0378113720092fc58ed7dc4154be7db6bcc/analysis/JID_SkinOptics.Rmd" target="_blank">2fc3d03</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+add correlation analysis
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/lasisilab/SkinOptics/81580b559815c98bbc6381b066ffa1a50be20352/docs/JID_SkinOptics.html" target="_blank">81580b5</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+build workflowr
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -685,6 +728,16 @@ reflectance percentage at 680 nm.</p></li>
 <li><p>Erythema index (EI) is calculated as EI = 100 * log10(R680 /
 ((R550 + R560)/2)), where R550 and R560 are the reflectance percentages
 at 550 nm and 560 nm, respectively.</p></li>
+<li><p>EI variability is measured by the standard deviation of EIs
+within a sliding window of MI values. The window size is set to 20 MI
+units, and the step size is 1 MI unit.</p>
+<ul>
+<li>For each center MI value in the sequence, all EI values
+corresponding to MI values within the window (center MI ± 10) are
+collected, and their standard deviation is computed.</li>
+<li>The center MI values range from the 1st to the 99th percentile of
+observed MI values.</li>
+</ul></li>
 <li><p>FACE site refers to Forehead and Cheek, while PALM site refers to
 the Palm of the hand.</p></li>
 <li><p>Representative FACE MI:</p>
@@ -1197,9 +1250,9 @@ Junhui He
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
-<div id="correlation-between-erythema-index-and-melanin-index"
+<div id="correlation-between-erythema-index-and-melanin-index-by-site"
 class="section level2">
-<h2>Correlation between erythema index and melanin index</h2>
+<h2>Correlation between erythema index and melanin index by site</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/ei-mi-correlation-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>
 <button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-ei-mi-correlation-1">
@@ -1238,6 +1291,36 @@ Junhui He
 </table>
 </div>
 </div>
+<pre><code>quartz_off_screen 
+                2 </code></pre>
+</div>
+<div
+id="correlation-between-erythema-index-variability-and-melanin-index-by-site"
+class="section level2">
+<h2>Correlation between erythema index variability and melanin index by
+site</h2>
+<ul>
+<li>EI variability is measured by the standard deviation of EIs within a
+sliding window of MI values. The window size is set to 20 MI units, and
+the step size is 1 MI unit.
+<ul>
+<li>For each center MI value in the sequence, all EI values
+corresponding to MI values within the window (center MI ± 10) are
+collected, and their standard deviation is computed.</li>
+<li>The center MI values range from the 1st to the 99th percentile of
+observed MI values.</li>
+</ul></li>
+</ul>
+<p><img src="figure/JID_SkinOptics.Rmd/ei-sd-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<pre><code>quartz_off_screen 
+                2 </code></pre>
+</div>
+<div
+id="correlation-between-erythema-index-variability-and-melanin-index-for-combined-face-and-palm-data"
+class="section level2">
+<h2>Correlation between erythema index variability and melanin index for
+combined face and palm data</h2>
+<p><img src="figure/JID_SkinOptics.Rmd/ei-sd-facepalm-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 <br>
