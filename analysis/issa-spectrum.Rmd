@@ -1,0 +1,584 @@
+---
+title: "ISSA Skin Spectrum Reflectance"
+author: "Junhui He"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  workflowr::wflow_html:
+    toc: yes
+    number_sections: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+# Load required libraries
+library(tidyverse)
+library(knitr)
+library(scales)
+library(patchwork)
+library(ggbeeswarm)
+library(ggridges)
+library(ggmulti)
+library(paletteer)
+library(stringr)
+
+library(gridExtra)
+library(openxlsx)
+library(fda.usc)
+
+# Set up the project root directory
+F = rprojroot::is_rstudio_project$make_fix_file()
+
+# Get available palettes for potential use
+palettedf <- tibble(paletteer::palettes_d_names)
+
+# Set global chunk options for the document
+knitr::opts_chunk$set(
+  echo = FALSE,        # Don't show code in output
+  include = TRUE,      # Include output
+  eval = TRUE,         # Evaluate code chunks
+  warning = FALSE,     # Don't show warnings
+  message = FALSE,     # Don't show messages
+  fig.retina = 2,      # Higher resolution figures
+  fig.width = 8,       # Default figure width
+  fig.height = 6,      # Default figure height
+  out.width = "100%"   # Full width in HTML output
+)
+```
+
+# Introduction to the ISSA Dataset
+
+The International Skin Spectra Archive (ISSA) offers a detailed collection of spectral and colorimetric data for human skin, encompassing 15,256 records from 2,113 subjects. This data spans from 2012 to 2024 and originates from eleven datasets curated by international laboratories across eight countries: the UK, Spain, China, Japan, Pakistan, Thailand, Iraq, and Saudi Arabia. Each dataset follows a standardised measurement protocol to maintain data consistency.
+
+In the ISSA dataset, individual records provide extensive details including record number, data origin, subject identification, and skin type—categorised by ethnicity, gender, age, and body location. The dataset also includes detailed information on the measurement instruments used, such as type, specular component inclusion, wavelength range and interval.
+
+Alongside spectral data, each sample also contains CIE colorimetric data, including tristimulus values, xy chromaticity coordinates, CIELAB parameters, etc., based on the CIE 1931 standard colorimetric observer and the CIE standard illuminant D65.
+
+## Data Records
+
+The datasheet arranges data across columns labelled A to BQ:
+
+-   A: Unique record identifier
+-   B: Data origin
+-   C: Subject number
+-   D to G: Ethnicity, gender, age group, and body location
+-   H to L: Instrument details including type and spectral measurement specifics
+-   N to BD: Spectral data from 360 nm to 780 nm
+-   BF to BQ: CIE colorimetric data
+
+## Skin Type
+
+-   **Ethnicity**: CA (Caucasian), CN (Chinese), SA (South Asian), AF (African), IQ (Iraqi), TH (Thai), JP (Japanese), AB (Arabian)
+-   **Gender**: F (Female), M (Male)
+-   **Body Location**: 1 (Back of Hand), 2 (Cheek), 3 (Cheek bone), 4 (Chin), 5 (Ear Lobe), 6 (Forehead), 7 (Inner arm), 8 (Neck), 9 (Nose tip), 10 (Outer arm), 11 (Palm), 12 (Ring finger)
+
+```{r load_issa}
+# Load the ISSA skin spectrum reflectance data
+# issa_path <- "G:/Phd/Colloborator/Tina Lasisi/Meta/ISSA_17_Jan_2025_Yan_Lu.xlsx"
+issa_path <- "/Users/hjh/PhD/Meta/ISSA_17_Jan_2025_Yan_Lu.xlsx"
+issa_code <- read.xlsx(issa_path, sheet = 1)
+issa <- read.xlsx(issa_path, sheet = 2)
+
+# Extract the skin spectrum data
+issa_spectrum <- issa[10:nrow(issa), ] # 360 nm: 13rd column, 780 nm: 55th column
+colnames(issa_spectrum) <- issa[9, ]
+```
+
+```{r util_functions}
+# ==============================================================================
+# DATA PROCESSING FUNCTIONS
+# ==============================================================================
+
+#' Calculate melanin index and prepare data for plotting
+#' 
+#' This function:
+#' 1. Calculates the melanin index (CMI) using wavelengths 640-670nm
+#' 2. Filters data to reasonable CMI range (20-130)
+#' 3. Samples data to prevent plot overload
+#' 4. Converts to long format for ggplot
+#' 
+#' @param data Processed spectral data frame
+#' @param sample_size Number of spectra to sample (default 400)
+#' @return Long-format data frame with id, wavelength, reflectance, and cmi
+calculateMIndex <- function(data, sample_size = 400) {
+  # Calculate melanin index using the formula from the literature
+  # This uses the red region of the spectrum (640-670nm)
+  data_processed <- data %>% 
+    mutate(
+      # Average reflectance in the red region
+      eqn1 = ((`650` + `660` + (0.5 * `640`) + (0.5 * `660`)) / 3) / 100,
+      # Convert to melanin index
+      cmi = 100 * log10(1 / eqn1)
+    )
+  
+  # Prepare data for plotting
+  data_long <- data_processed %>%
+    #mutate(id = row_number()) %>%
+    # Filter to reasonable melanin index range
+    filter(cmi >= 20 & cmi <= 130) %>% 
+    # Sample to prevent plot overload
+    # slice_sample(n = sample_size) %>% 
+    # Convert to long format
+    pivot_longer(cols = matches("^[0-9]+$"), 
+                 names_to = "wavelength", 
+                 values_to = "reflectance") %>% 
+    # Extract numeric wavelength values
+    mutate(wavelength = as.numeric(str_remove(wavelength, "\\D+"))) %>% 
+    # Focus on visible spectrum
+    filter(wavelength >= 400 & wavelength <= 700) # %>%
+    # select(id, everything())
+  
+  return(data_long)
+}
+
+# ==============================================================================
+# PLOTTING FUNCTIONS
+# ==============================================================================
+
+#' Generate skin spectra plot
+#' 
+#' Creates a plot showing reflectance spectra colored by melanin index
+#' 
+#' @param data Long-format data with wavelength, reflectance and cmi
+#' @return A ggplot object
+PlotSkinSpectra <- function(data, title = "Spectra from ISSA dataset") {
+  plot <- ggplot(data, aes(x = wavelength, y = reflectance, 
+                           group = C, color = cmi)) +
+    geom_line(alpha = 0.6) +  # Add transparency to handle overlapping lines
+    # Color gradient from dark to light skin
+    scale_color_gradientn(
+      colours = c("#42230c", "#a15c33", "#fbf7ec"),
+      values = rescale(x = c(50, 40, 20)),
+      oob = squish,
+      limits = c(20, 130)
+    ) +
+    expand_limits(y = 0) +
+    theme_classic() +
+    labs(
+      x = "Wavelength (nm)",
+      y = "Percent Reflectance of Skin",
+      color = "Melanin Index"
+    ) +
+    guides(color = guide_colorbar(reverse = TRUE)) +
+    # Highlight the region used for melanin index calculation
+    annotate("rect", xmin = 640, xmax = 670, ymin = 0, ymax = 70,
+             alpha = 0.3, fill = "#ff0000") +
+    labs(
+      title = title #,
+      # subtitle = "Red region (640-670nm) is used to calculate melanin index"
+    )
+  
+  return(plot)
+}
+
+#' Wrapper function to process file and generate plot
+#' 
+#' @param file_name Path to the CSV file
+#' @return A ggplot object
+PlotSkinSpectraWrapper <- function(data, title, ethnicity = "CA", location = "6", gender = NULL) {
+  # Process the data
+  if(is.null(gender)) {
+    processed_data <- data %>% filter(D == ethnicity, G == location)
+  } else {
+    processed_data <- data %>% filter(D == ethnicity, E == gender, G == location)
+  }
+  
+  # Calculate melanin index
+  data_with_mindex <- calculateMIndex(processed_data)
+  
+  # Generate the plot
+  plot <- PlotSkinSpectra(data_with_mindex, title = title)
+  
+  return(plot)
+}
+```
+
+# Plot Skin Spectrum Reflectance from ISSA
+
+In this section, we present skin reflectance spectra (reflectance intensity vs. wavelength) at the forehead, comparing different ethnicities and genders.
+
+```{r issa_spectrum_plot, fig.cap="ISSA skin reflectance spectra colored by melanin index", fig.height=5}
+eths = c("CA", "CN", "SA", "AF", "IQ", "TH", "JP", "AB")
+eths_full = c("Caucasians", "Chineses", "South Asians", "Africans", "Iraqis", "Thais", "Japaneses", "Arabians")
+
+for (i in seq_along(eths)) {
+  ethnicity = eths[i]
+  ethnicity_full = eths_full[i]
+  plot_female = PlotSkinSpectraWrapper(issa_spectrum, title = paste("Female", ethnicity_full,"at Forehead"), ethnicity = ethnicity, gender = "F", location = "6")
+  plot_male = PlotSkinSpectraWrapper(issa_spectrum, title = paste("Male", ethnicity_full,"at Forehead"), ethnicity = ethnicity, gender = "M", location = "6")
+  print(plot_female + plot_male + plot_layout(guides = "collect") & theme(legend.position = "bottom"))
+}
+```
+
+# Construct Confidence Intervals
+
+In this section, we construct confidence intervals of the skin reflectance spectra in ISSA. The intervals are obtained using the following methods:
+
+-   **Naive Pointwise Confidence Intervals**
+
+-   **Bootstrap Methods**
+
+For compactness, we restrict our analysis to three ethnic groups---Caucasian, Chinese, and African---combining male and female participants, and focusing on the forehead location (site 6).
+
+```{r ci_data, echo=TRUE}
+# Extract the reflectance spectra of Caucasians, Chinese, and Africans at forehead
+location = "6"
+issa_spectrum_ca <- as.matrix(issa_spectrum %>% filter(D == "CA", G == location) %>% dplyr::select("400":"700"))
+issa_spectrum_cn <- as.matrix(issa_spectrum %>% filter(D == "CN", G == location) %>% dplyr::select("400":"700"))
+issa_spectrum_af <- as.matrix(issa_spectrum %>% filter(D == "AF", G == location) %>% dplyr::select("400":"700"))
+
+wavelength = as.numeric(colnames(issa_spectrum_ca))
+```
+
+## Naive Pointwise Confidence Intervals
+
+Naive Pointwise Confidence Intervals calculate the mean reflectance and the empirical quantiles (*e.g.*, $\alpha/2$ and $1-\alpha/2$ quantiles) at each wavelength. The pointwise $1-\alpha$ confidence interval is then constructed as: $$(\alpha/2 ~ \text{quantile}, ~ 1-\alpha/2 ~ \text{quantile} ).$$
+
+```{r issa_spectrum_ci_naive, fig.cap="Naive pointwise confidence intervals for forehead reflectance spectra", fig.height=10, echo=TRUE}
+NaivePointwiseCI <- function(data, level = 0.95) {
+  wavelength = as.numeric(colnames(data))
+  lower = apply(data, 2, quantile, probs = (1-level)/2)
+  upper = apply(data, 2, quantile, probs = level + (1-level)/2)
+  mean_curve = colMeans(data)
+  return(data.frame(wavelength=wavelength, lower=lower, upper=upper, mean=mean_curve))
+}
+
+PlotPointwiseCI <- function(df_ci, title) {
+  plot = ggplot(df_ci, aes(x = wavelength)) +
+    geom_ribbon(aes(ymin = lower, ymax = upper), fill = "#fbf7ec") +
+    geom_line(aes(y = mean), color = "#a15c33", linewidth = 1) +
+    expand_limits(y = 0) +
+    ylim(0, 70) + 
+    theme_classic() +
+    labs(
+      x = "Wavelength (nm)",
+      y = "Percent Reflectance of Skin",
+      color = "Melanin Index"
+    ) +
+    labs(
+      title = title
+    )
+  return(plot)
+}
+
+# Calculate lower, upper bounds and mean values
+issa_ci_ca = NaivePointwiseCI(issa_spectrum_ca, level = 0.95)
+issa_ci_cn = NaivePointwiseCI(issa_spectrum_cn, level = 0.95)
+issa_ci_af = NaivePointwiseCI(issa_spectrum_af, level = 0.95)
+
+plot_ci_ca = PlotPointwiseCI(issa_ci_ca, title = "Naive Pointwise Confidence Intervals")
+plot_ca = PlotSkinSpectraWrapper(issa_spectrum, title = "Caucasians at Forehead", ethnicity = "CA", location = 6)
+
+plot_ci_cn = PlotPointwiseCI(issa_ci_cn, title = "Naive Pointwise Confidence Intervals")
+plot_cn = PlotSkinSpectraWrapper(issa_spectrum, title = "Chinese at Forehead", ethnicity = "CN", location = 6)
+
+plot_ci_af = PlotPointwiseCI(issa_ci_af, title = "Naive Pointwise Confidence Intervals")
+plot_af = PlotSkinSpectraWrapper(issa_spectrum, title = "Africans at Forehead", ethnicity = "AF", location = 6)
+
+print(((plot_ca | plot_ci_ca) / (plot_cn | plot_ci_cn) / (plot_af | plot_ci_af)))
+```
+
+## Bootstrap Confidence Intervals for the Mean Function
+
+To calculate confidence intervals for the mean function, we can bootstrap:
+
+1.  Resample $n$ curves with replacement.
+2.  Compute the mean function for each resample.
+3.  For each wavelength, compute the quantiles of the bootstrapped means.
+
+```{r ci_bootstrap, fig.cap="Bootstrap pointwise confidence intervals for the mean function", fig.height=10, echo=TRUE}
+BootstrapPointwiseCI <- function(data, level = 0.95) {
+  n = nrow(data)
+  m = ncol(data)
+  B = 1000 # Bootstrap sample size
+  
+  boot_means = array(NA, c(B, m))
+  for (b in 1:B) {
+    idx = sample(1:n, n, replace = TRUE)
+    boot_means[b, ] = colMeans(data[idx, ])
+  }
+  
+  wavelength = as.numeric(colnames(data))
+  lower = apply(boot_means, 2, quantile, probs = (1-level)/2)
+  upper = apply(boot_means, 2, quantile, probs = level + (1-level)/2)
+  mean_curve = colMeans(data)
+  return(data.frame(wavelength=wavelength, lower=lower, upper=upper, mean=mean_curve))
+}
+
+# Calculate lower, upper bounds and mean values
+issa_ci_ca_boot = BootstrapPointwiseCI(issa_spectrum_ca, level = 0.95)
+issa_ci_cn_boot = BootstrapPointwiseCI(issa_spectrum_cn, level = 0.95)
+issa_ci_af_boot = BootstrapPointwiseCI(issa_spectrum_af, level = 0.95)
+
+plot_ci_ca_boot = PlotPointwiseCI(issa_ci_ca_boot, title = "Bootstrap Pointwise Confidence Intervals")
+plot_ci_cn_boot = PlotPointwiseCI(issa_ci_cn_boot, title = "Bootstrap Pointwise Confidence Intervals")
+plot_ci_af_boot = PlotPointwiseCI(issa_ci_af_boot, title = "Bootstrap Pointwise Confidence Intervals")
+print(((plot_ci_ca | plot_ci_ca_boot) / (plot_ci_cn | plot_ci_cn_boot) / (plot_ci_af | plot_ci_af_boot)))
+```
+
+## Functional PCA based confidence intervals
+
+Functional Principal Component Analysis is a classical statistical method for functional data analysis. Using this method, a random function is represented in the eigenbasis, which is an orthonormal basis of the Hilbert space that consists of the eigenfunctions of the autocovariance operator. 
+
+For a squared-integrable stochastic process $\{X_t,~t\in T\}$, let 
+$$\mu_t = \mathbb{E}X_t,$$
+and 
+$$G(s,t)=\mathbb{E}[(X_s-\mu_s)(X_t-\mu_t)]=\sum_{k=1}^\infty \lambda_k \varphi_k(s)\varphi_k(t),$$
+where $\lambda_1\geq\lambda_2 \geq \cdots \geq 0$ are the eigenvalues and $\varphi_1,\varphi_2,\ldots$ are the eigenfunctions of a  linear Hilbert--Schmidt operator. By the Karhunen–Loève theorem, one can express the centered process in the eigenbasis,
+$$X_t = \mu_t + \sum_{k=1}^\infty \xi_k \varphi_k(t),$$
+where $\xi_k$ is endowed with the properties
+$$\mathbb{E}\xi_k = 0, \quad \text{Var}(\xi_k)=\lambda_k,\quad \mathbb{E}\xi_k\xi_l = 0,~k\neq l.$$
+
+```{r ci_fpca, fig.cap="FPCA-based pointwise confidence intervals for forehead reflectance spectra", fig.height=10, echo=TRUE}
+# X: n x m matrix of curves (rows = curves, cols = grid points)
+FPCAPointwiseCI <- function(X,
+                            level = 0.95, ev_thresh = 0.99, K = NULL) {
+  stopifnot(is.matrix(X))
+  n <- nrow(X); m <- ncol(X)
+  alpha <- 1 - level
+
+  # 1) Estimate mean curve
+  mu_hat <- colMeans(X)
+
+  # 2) Centered data and covariance across grid points
+  Xc <- sweep(X, 2, mu_hat, "-")
+  C_hat <- crossprod(Xc) / (n - 1)   # m x m
+
+  # 3) FPCA
+  eig <- eigen(C_hat, symmetric = TRUE)
+  lam <- pmax(eig$values, 0)
+  Phi <- eig$vectors               # columns are eigenfunctions on the grid
+
+  # choose K
+  if (is.null(K)) {
+    cumvar <- cumsum(lam) / sum(lam)
+    K <- which(cumvar >= ev_thresh)[1]
+  }
+  lamK <- lam[1:K]; PhiK <- Phi[, 1:K, drop = FALSE]
+
+  # 4) Pointwise SE for mean via diag(C)/n
+  var_mu <- colSums( t(PhiK^2) * lamK )  # diag approx: sum_k lam_k * phi_k(t)^2 / n
+  se_mu  <- sqrt(var_mu)
+
+  # 5) Pointwise band
+  z <- qnorm(1 - alpha/2)
+  lower_pt <- mu_hat - z * se_mu
+  upper_pt <- mu_hat + z * se_mu
+
+  wavelength = as.numeric(colnames(X))
+  
+  list(
+    wavelength = wavelength,
+    mean = mu_hat,
+    se = se_mu,
+    lower = lower_pt,
+    upper = upper_pt,
+    lambda = lamK,
+    phi = PhiK,
+    K = K,
+    ev_explained = sum(lamK) / sum(lam)
+  )
+}
+
+# Calculate lower, upper bounds and mean values
+issa_ci_ca_fpca_full = FPCAPointwiseCI(issa_spectrum_ca, level = 0.95)
+issa_ci_ca_fpca = data.frame(wavelength = issa_ci_ca_fpca_full$wavelength,
+                             lower = issa_ci_ca_fpca_full$lower,
+                             upper = issa_ci_ca_fpca_full$upper,
+                             mean = issa_ci_ca_fpca_full$mean)
+issa_ci_cn_fpca_full = FPCAPointwiseCI(issa_spectrum_cn, level = 0.95)
+issa_ci_cn_fpca = data.frame(wavelength = issa_ci_cn_fpca_full$wavelength,
+                             lower = issa_ci_cn_fpca_full$lower,
+                             upper = issa_ci_cn_fpca_full$upper,
+                             mean = issa_ci_cn_fpca_full$mean)
+issa_ci_af_fpca_full = FPCAPointwiseCI(issa_spectrum_af, level = 0.95)
+issa_ci_af_fpca = data.frame(wavelength = issa_ci_af_fpca_full$wavelength,
+                             lower = issa_ci_af_fpca_full$lower,
+                             upper = issa_ci_af_fpca_full$upper,
+                             mean = issa_ci_af_fpca_full$mean)
+
+plot_ci_ca_fpca = PlotPointwiseCI(issa_ci_ca_fpca, title = "FPCA-based Pointwise CIs")
+plot_ci_cn_fpca = PlotPointwiseCI(issa_ci_cn_fpca, title = "FPCA-based Pointwise CIs")
+plot_ci_af_fpca = PlotPointwiseCI(issa_ci_af_fpca, title = "FPCA-based Pointwise CIs")
+
+print(((plot_ca | plot_ci_ca_fpca) / (plot_cn | plot_ci_cn_fpca) / (plot_af | plot_ci_af_fpca)))
+```
+
+
+# Functional depth based criterion
+
+**Functional depth** is a center-outward score to rank curves from "central" to "outlying". The depth of a curve is high if it stays with the bulk of the sample across grid points, and low if it wanders to extremes. 
+
+There are many different types of functional depth. Let us consider three common depth notions---**Fraiman–Muniz (FM) depth**, **Modified Band Depth (MBD)** and **Projection-type depth**. Consider a functional data set consists of $n$ curves evaluated on grid points $t\in T$, denoted as $\{x_i(t),~t\in T\}_{1\leq i \leq n}$.
+
++ **Fraiman–Muniz (FM) depth**: At each time $t$, compute the empirical CDF $F_t$ of the sample values $\{x_i(t)\}_{1\leq i \leq n}$. Define a univariate depth at time $t$: $d_t(u) = 1 - |1 - 2 F_t(u)|$ (it peaks at the median). Then integrate over time:
+$$D_{FM}(x) = \int_T d_t(x(t)) dt.$$
+**Remark:** The FM depth captures how often the curve $x(t)$ sits near the pointwise median.
+
++ **Modified Band Depth (MBD)**: For each pair of sample curves $(i,j)$, form the band between them, and check the portion of time $x(t)$ stays inside the band. Average over all pairs:
+$$MBD(x)=\frac{2}{n(n-1)} \sum_{i< j} \frac{\lambda(\{t:~\min(x_i(t),x_j(t))\leq x(t) \leq \max(x_i(t),x_j(t))\})}{\lambda(T)}.$$
+With Ranks $R_j$ of $x(t_j)$ among $\{x_i(t_j)\}_{1\leq i \leq n}$, a handy grid formula is
+$$MBD(x) = \frac{1}{p} \sum_{j=1}^p \frac{(R_j-1)(n-R_j)}{\binom{n}{2}}.$$
+**Remark:** MBD captures how much of the time the curve lies within typical envelopes.
+
++ **Projection-type depth**: Project curves onto many directions $a_k(t)$ (e.g., random or PCA), compute a depth on projections $<x,a_k>$, then aggregate.
+
+**Remark:** The projection depth captures the global structure and is geometry-friendly.
+
+## Depth-based central band
+
+1. Compute a functional depth (Fraiman–Muniz depth is stable and fast).
+
+2. Keep the deepest $(1-\alpha)n$ curves.
+
+3. The band is the pointwise min/max over those selected curves.
+
+4. A new curve is “inside” if it stays within the band over (nearly) all grid points.
+
+```{r FM_depth_central_band, fig.cap="Depth-based pointwise central bands for forehead reflectance spectra", fig.height=10, echo=TRUE}
+# Build a Fraiman–Muniz depth-based central band
+# X: matrix (n_curves x p_grid), rows = curves, cols = grid points
+# level: coverage level (e.g., 0.95 for 95% central band)
+build_depth_central_band <- function(X, t, level = 0.95) {
+  stopifnot(is.matrix(X))
+  n <- nrow(X)
+  fd <- fdata(mdata = X, argvals = t)
+  depths <- depth.FM(fd)$dep   # Fraiman–Muniz depths (higher = more central)
+  k <- ceiling(level * n)
+  keep_idx <- order(depths, decreasing = TRUE)[seq_len(k)]
+  # Pointwise envelope of the k deepest curves
+  L <- apply(X[keep_idx, , drop = FALSE], 2, min)
+  U <- apply(X[keep_idx, , drop = FALSE], 2, max)
+  list(wavelength=t, lower = L, upper = U, median = X[keep_idx[1], ], depths = depths, keep_idx = keep_idx)
+}
+
+issa_depth_ca_full = build_depth_central_band(issa_spectrum_ca, wavelength, level = 0.95)
+issa_depth_ca = data.frame(wavelength = issa_depth_ca_full$wavelength,
+                             lower = issa_depth_ca_full$lower,
+                             upper = issa_depth_ca_full$upper,
+                             mean = issa_depth_ca_full$median)
+
+issa_depth_cn_full = build_depth_central_band(issa_spectrum_cn, wavelength, level = 0.95)
+issa_depth_cn = data.frame(wavelength = issa_depth_cn_full$wavelength,
+                             lower = issa_depth_cn_full$lower,
+                             upper = issa_depth_cn_full$upper,
+                             mean = issa_depth_cn_full$median)
+
+issa_depth_af_full = build_depth_central_band(issa_spectrum_af, wavelength, level = 0.95)
+issa_depth_af = data.frame(wavelength = issa_depth_af_full$wavelength,
+                             lower = issa_depth_af_full$lower,
+                             upper = issa_depth_af_full$upper,
+                             mean = issa_depth_af_full$median)
+
+plot_depth_ca = PlotPointwiseCI(issa_depth_ca, title = "Depth-based Central Band")
+plot_depth_cn = PlotPointwiseCI(issa_depth_cn, title = "Depth-based Central Band")
+plot_depth_af = PlotPointwiseCI(issa_depth_af, title = "Depth-based Central Band")
+
+print(((plot_ca | plot_depth_ca) / (plot_cn | plot_depth_cn) / (plot_af | plot_depth_af)))
+```
+
+## One-class membership score via depth
+
+1. Compute the depth of each training curve.
+
+2. Set the depth cutoff at the $\alpha$-quantile of training depths.
+
+3. Compute the depth of the new curve relative to the training set.
+
+4. Classify as “in” if its depth ≥ cutoff.
+
+```{r depth_classifier, echo=TRUE}
+# Fraction of grid points where y lies inside [L, U]
+inclusion_score <- function(y, L, U, tol_eps = 0) {
+  stopifnot(length(y) == length(L), length(L) == length(U))
+  mean((y >= (L - tol_eps)) & (y <= (U + tol_eps)))
+}
+
+# One-curve Modified Band Depth (MBD) of y relative to X
+# Fast rank-based formula (Lopez-Pintado & Romo, 2009)
+# X: n x p, y: length p
+mbd_new <- function(X, y) {
+  stopifnot(is.matrix(X), length(y) == ncol(X))
+  n <- nrow(X); p <- ncol(X)
+  # Rank of y among sample values at each grid point
+  # ties are averaged; that’s okay for MBD in practice
+  R <- vapply(seq_len(p), function(j) {
+    xj <- X[, j]
+    sum(xj < y[j]) + 1 + 0.5 * sum(xj == y[j]) - 0.5  # mid-rank without calling rank()
+  }, numeric(1))
+  # MBD formula: average over grid of [ (R-1)*(n-R) ] / choose(n, 2)
+  mean(((R - 1) * (n - R)) / (n * (n - 1) / 2))
+}
+
+# Classify new curve combining band inclusion and depth threshold
+# Returns a list with decisions and scores
+classify_curve <- function(y_new, X, t, level = 0.95, band_tol_prop = 0.95, tol_eps = 0) {
+  # Build band
+  band <- build_depth_central_band(X, t, level)
+  s_incl <- inclusion_score(y_new, band$lower, band$upper, tol_eps = tol_eps)
+  in_band <- (s_incl >= band_tol_prop)
+
+  # Depth threshold (use Fraiman–Muniz on training; MBD for the new curve)
+  # FM depth for training:
+  depths_train <- band$depths
+  depth_cutoff <- quantile(depths_train, probs = 1-level, type = 8)
+
+  # MBD for the new curve relative to X (stable and fast)
+  mbd_y <- mbd_new(X, y_new)
+
+  # For comparability, also compute FM depth of y_new by augmenting and extracting.
+  fd_all <- fdata(mdata = rbind(X, y_new), argvals = t)
+  fm_all <- depth.FM(fd_all)$dep
+  fm_y <- tail(fm_all, 1)
+
+  in_depth <- (fm_y >= depth_cutoff) # primary depth rule using FM
+
+  list(
+    band = band,
+    inclusion_score = s_incl,
+    in_band = in_band,
+    fm_depth_new = fm_y,
+    fm_depth_cutoff = as.numeric(depth_cutoff),
+    in_depth = in_depth,
+    mbd_new = mbd_y,
+    decision = (in_band && in_depth)
+  )
+}
+```
+
+We examine the performance of this decision rule on three simulated curves. The training set is ISSA Caucasian skin reflectance spectra at forehead.
+
+```{r depth_classifier_example, fig.cap="Depth-based pointwise central bands for forehead reflectance spectra", fig.height=5}
+# construct simulated spectra curves
+y_1 = issa_depth_ca$mean
+y_2 = issa_depth_af$mean
+y_3 = sapply(wavelength, function(t) {ifelse(t<550, -(t-400)/15+20, 5*(t-550)/15+10)})
+
+df_classifier = data.frame(wavelength=wavelength, y_1=y_1, y_2=y_2, y_3=y_3) %>% pivot_longer(cols=c(y_1,y_2,y_3),names_to = "group", values_to = "values")
+
+plot_sim = ggplot(df_classifier, aes(x = wavelength, y=values, color=group)) +
+    geom_line(linewidth = 1) +
+    expand_limits(y = 0) +
+    ylim(0, 70) + 
+    theme_classic() +
+    labs(
+      x = "Wavelength (nm)",
+      y = "Percent Reflectance of Skin"
+    ) +
+    labs(
+      title = "Simulated skin spetra curves",
+      color = "Curves"
+    )
+print((plot_ca|plot_sim))
+
+# Decision & scores
+res_1 = classify_curve(y_1, issa_spectrum_ca, wavelength)
+res_2 = classify_curve(y_2, issa_spectrum_ca, wavelength)
+res_3 = classify_curve(y_3, issa_spectrum_ca, wavelength)
+
+cat("Decision (band & depth):\n",
+    "y_1:", ifelse(res_1$decision, "BELONGS", "DOES NOT BELONG"), "\n",
+    "y_2:", ifelse(res_2$decision, "BELONGS", "DOES NOT BELONG"), "\n",
+    "y_3:", ifelse(res_3$decision, "BELONGS", "DOES NOT BELONG"), "\n")
+```
+
