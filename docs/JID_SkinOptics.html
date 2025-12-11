@@ -514,15 +514,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree2fc3d0378113720092fc58ed7dc4154be7db6bcctargetblank2fc3d03a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreedf71367052b0b484d20c28fcc6d23a73cc1b7745targetblankdf71367a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/lasisilab/SkinOptics/tree/2fc3d0378113720092fc58ed7dc4154be7db6bcc" target="_blank">2fc3d03</a>
+<a href="https://github.com/lasisilab/SkinOptics/tree/df71367052b0b484d20c28fcc6d23a73cc1b7745" target="_blank">df71367</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree2fc3d0378113720092fc58ed7dc4154be7db6bcctargetblank2fc3d03a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreedf71367052b0b484d20c28fcc6d23a73cc1b7745targetblankdf71367a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -532,7 +532,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/lasisilab/SkinOptics/tree/2fc3d0378113720092fc58ed7dc4154be7db6bcc" target="_blank">2fc3d03</a>.
+<a href="https://github.com/lasisilab/SkinOptics/tree/df71367052b0b484d20c28fcc6d23a73cc1b7745" target="_blank">df71367</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -552,14 +552,18 @@ Ignored files:
     Ignored:    .Rproj.user/
 
 Untracked files:
-    Untracked:  output/ei_sd_mi_correlation.pdf
-    Untracked:  output/facepalm_ei_mi_correlation.pdf
+    Untracked:  output/absorbance_derivative_palm_face.pdf
+    Untracked:  output/reflectance_derivative_palm_face.pdf
+    Untracked:  output/reflectance_derivative_palmface.pdf
 
 Unstaged changes:
+    Modified:   .DS_Store
     Modified:   output/absorbance_derivative_face.pdf
     Modified:   output/absorbance_derivative_palm.pdf
     Modified:   output/absorbance_mi_sd.pdf
     Modified:   output/ei_mi_correlation.pdf
+    Modified:   output/ei_sd_mi_correlation.pdf
+    Modified:   output/facepalm_ei_mi_correlation.pdf
     Modified:   output/heatmap.pdf
     Modified:   output/mi_distribution.pdf
     Modified:   output/reflectance_derivative_face.pdf
@@ -610,6 +614,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/df71367052b0b484d20c28fcc6d23a73cc1b7745/analysis/JID_SkinOptics.Rmd" target="_blank">df71367</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+modify face site
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/lasisilab/SkinOptics/d98f12d4c20e7eb56337ee2b139238717e39a260/docs/JID_SkinOptics.html" target="_blank">d98f12d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -738,14 +776,16 @@ collected, and their standard deviation is computed.</li>
 <li>The center MI values range from the 1st to the 99th percentile of
 observed MI values.</li>
 </ul></li>
-<li><p>FACE site refers to Forehead and Cheek, while PALM site refers to
+<li><p>FACE site refers to Forehead or Cheek, while PALM site refers to
 the Palm of the hand.</p></li>
 <li><p>Representative FACE MI:</p>
 <ul>
 <li>For each subject, the FACE MI is given by the Forehead MI if the
 Forehead MI is available; otherwise, it is the Cheek MI.</li>
-<li>For subjects with multiple measurements at the same FACE site, the
-average MI across those measurements is used.</li>
+<li>For subjects with multiple measurements at the same FACE site, we
+randomly select one measurement.</li>
+<li>Each subject has only one representative FACE reflectance
+spectra.</li>
 </ul></li>
 <li><p>First derivatives of skin spectra are estimated using local
 polynomial regression with bandwidth selected by the dpill function,
@@ -869,23 +909,23 @@ class="section level2">
 <tbody>
 <tr class="odd">
 <td align="left">Low</td>
-<td align="right">296</td>
+<td align="right">77</td>
 </tr>
 <tr class="even">
 <td align="left">Intermediate low</td>
-<td align="right">3801</td>
+<td align="right">1800</td>
 </tr>
 <tr class="odd">
 <td align="left">Intermediate</td>
-<td align="right">418</td>
+<td align="right">191</td>
 </tr>
 <tr class="even">
 <td align="left">Intermediate high</td>
-<td align="right">80</td>
+<td align="right">30</td>
 </tr>
 <tr class="odd">
 <td align="left">High</td>
-<td align="right">7</td>
+<td align="right">3</td>
 </tr>
 </tbody>
 </table>
@@ -904,7 +944,7 @@ class="section level2">
 </tr>
 <tr class="even">
 <td align="left">Intermediate low</td>
-<td align="right">623</td>
+<td align="right">621</td>
 </tr>
 <tr class="odd">
 <td align="left">Intermediate</td>
@@ -916,6 +956,9 @@ class="section level2">
 </tr>
 </tbody>
 </table>
+<div id="face-reflectance-derivatives-by-face-eumelanin-class"
+class="section level3">
+<h3>Face reflectance derivatives by face eumelanin class</h3>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>
 <button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-reflectance-by-class-face-1">
@@ -956,6 +999,10 @@ Junhui He
 </div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
+</div>
+<div id="palm-reflectance-derivatives-by-palm-eumelanin-class"
+class="section level3">
+<h3>Palm reflectance derivatives by palm eumelanin class</h3>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-palm-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>
 <button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-reflectance-by-class-palm-1">
@@ -997,9 +1044,20 @@ Junhui He
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
+<div id="palm-reflectance-derivatives-by-face-eumelanin-class"
+class="section level3">
+<h3>Palm reflectance derivatives by face eumelanin class</h3>
+<p><img src="figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-palm-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<pre><code>quartz_off_screen 
+                2 </code></pre>
+</div>
+</div>
 <div id="first-derivatives-of-absorbance-by-eumelanin-classes"
 class="section level2">
 <h2>First derivatives of absorbance by eumelanin classes</h2>
+<div id="face-absorbance-derivatives-by-face-eumelanin-class"
+class="section level3">
+<h3>Face absorbance derivatives by face eumelanin class</h3>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-absorbance-by-class-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>
 <button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-absorbance-by-class-face-1">
@@ -1040,6 +1098,10 @@ Junhui He
 </div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
+</div>
+<div id="palm-absorbance-derivatives-by-palm-eumelanin-class"
+class="section level3">
+<h3>Palm absorbance derivatives by palm eumelanin class</h3>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-absorbance-by-class-palm-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>
 <button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-absorbance-by-class-palm-1">
@@ -1080,6 +1142,14 @@ Junhui He
 </div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
+</div>
+<div id="palm-absorbance-derivatives-by-face-eumelanin-class"
+class="section level3">
+<h3>Palm absorbance derivatives by face eumelanin class</h3>
+<p><img src="figure/JID_SkinOptics.Rmd/plot-absorbance-by-class-palm-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<pre><code>quartz_off_screen 
+                2 </code></pre>
+</div>
 </div>
 <div
 id="correlation-between-reflectance-derivative-sd-and-melanin-index"
@@ -1133,38 +1203,38 @@ Call:
 lm(formula = sd_ref ~ log_mi + I(log_mi^2), data = sd_face)
 
 Residuals:
-     Min       1Q   Median       3Q      Max 
--0.07754 -0.01585 -0.00113  0.01262  0.11441 
+      Min        1Q    Median        3Q       Max 
+-0.069041 -0.014131 -0.001693  0.011082  0.100521 
 
 Coefficients:
              Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)  1.608490   0.044784   35.92   &lt;2e-16 ***
-log_mi      -0.708782   0.024262  -29.21   &lt;2e-16 ***
-I(log_mi^2)  0.079846   0.003271   24.41   &lt;2e-16 ***
+(Intercept)  1.560287   0.066388   23.50   &lt;2e-16 ***
+log_mi      -0.682188   0.035856  -19.03   &lt;2e-16 ***
+I(log_mi^2)  0.076287   0.004825   15.81   &lt;2e-16 ***
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 
-Residual standard error: 0.02462 on 4599 degrees of freedom
-Multiple R-squared:  0.6491,    Adjusted R-squared:  0.6489 
-F-statistic:  4253 on 2 and 4599 DF,  p-value: &lt; 2.2e-16</code></pre>
+Residual standard error: 0.02265 on 2098 degrees of freedom
+Multiple R-squared:  0.6498,    Adjusted R-squared:  0.6495 
+F-statistic:  1947 on 2 and 2098 DF,  p-value: &lt; 2.2e-16</code></pre>
 <pre><code>
 Call:
 lm(formula = sd_ref ~ log_mi, data = sd_palm)
 
 Residuals:
       Min        1Q    Median        3Q       Max 
--0.066026 -0.016322  0.000318  0.015338  0.071978 
+-0.066053 -0.016370  0.000337  0.015371  0.071971 
 
 Coefficients:
              Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)  0.560294   0.013141   42.64   &lt;2e-16 ***
-log_mi      -0.120610   0.003783  -31.88   &lt;2e-16 ***
+(Intercept)  0.560165   0.013160   42.56   &lt;2e-16 ***
+log_mi      -0.120567   0.003789  -31.82   &lt;2e-16 ***
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 
-Residual standard error: 0.02377 on 776 degrees of freedom
-Multiple R-squared:  0.5671,    Adjusted R-squared:  0.5665 
-F-statistic:  1016 on 1 and 776 DF,  p-value: &lt; 2.2e-16</code></pre>
+Residual standard error: 0.0238 on 774 degrees of freedom
+Multiple R-squared:  0.5668,    Adjusted R-squared:  0.5662 
+F-statistic:  1013 on 1 and 774 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p><img src="figure/JID_SkinOptics.Rmd/regression-drv-mi-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <p>
 <button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-regression-drv-mi-1">
@@ -1312,6 +1382,43 @@ observed MI values.</li>
 </ul></li>
 </ul>
 <p><img src="figure/JID_SkinOptics.Rmd/ei-sd-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-ei-sd-1">
+Past versions of ei-sd-1.png
+</button>
+</p>
+<div id="fig-ei-sd-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/d98f12d4c20e7eb56337ee2b139238717e39a260/docs/figure/JID_SkinOptics.Rmd/ei-sd-1.png" target="_blank">d98f12d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
@@ -1321,6 +1428,43 @@ class="section level2">
 <h2>Correlation between erythema index variability and melanin index for
 combined face and palm data</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/ei-sd-facepalm-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-ei-sd-facepalm-1">
+Past versions of ei-sd-facepalm-1.png
+</button>
+</p>
+<div id="fig-ei-sd-facepalm-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/d98f12d4c20e7eb56337ee2b139238717e39a260/docs/figure/JID_SkinOptics.Rmd/ei-sd-facepalm-1.png" target="_blank">d98f12d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 <br>
