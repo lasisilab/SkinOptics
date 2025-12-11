@@ -35,6 +35,10 @@ knitr::opts_chunk$set(
 
 - Erythema index (EI) is calculated as EI = 100 * log10(R680 / ((R550 + R560)/2)), where R550 and R560 are the reflectance percentages at 550 nm and 560 nm, respectively.
 
+- EI variability is measured by the standard deviation of EIs within a sliding window of MI values. The window size is set to 20 MI units, and the step size is 1 MI unit.
+  - For each center MI value in the sequence, all EI values corresponding to MI values within the window (center MI ± 10) are collected, and their standard deviation is computed.
+  - The center MI values range from the 1st to the 99th percentile of observed MI values.
+
 - FACE site refers to Forehead and Cheek, while PALM site refers to the Palm of the hand. 
 
 - Representative FACE MI: 
@@ -589,7 +593,7 @@ wrap_plots(plot_face_abs, plot_palm_abs, nrow = 1, guides = "collect") + plot_an
 dev.off()
 ```
 
-## Correlation between erythema index and melanin index
+## Correlation between erythema index and melanin index by site
 
 ```{r ei-mi-correlation, fig.width=10, fig.height=6}
 # face
@@ -606,5 +610,73 @@ wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_anno
 
 pdf("output/ei_mi_correlation.pdf", width = 10, height = 6)
 wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
+dev.off()
+```
+
+## Correlation between erythema index variability and melanin index by site
+
+- EI variability is measured by the standard deviation of EIs within a sliding window of MI values. The window size is set to 20 MI units, and the step size is 1 MI unit.
+  - For each center MI value in the sequence, all EI values corresponding to MI values within the window (center MI ± 10) are collected, and their standard deviation is computed.
+  - The center MI values range from the 1st to the 99th percentile of observed MI values.
+
+```{r ei-sd, fig.width=10, fig.height=6}
+window_size = 20 # melanin index units
+step_size = 1 # melanin index units
+# face
+face_mi_seq = seq(floor(quantile(face_spectrum$mi, probs = 0.01)), floor(quantile(face_spectrum$mi, probs = 0.99)), by = step_size)
+face_ei_sd = sapply(face_mi_seq, function(mi_val) {
+  window_data = face_spectrum %>% filter(mi >= (mi_val - window_size/2) & mi < (mi_val + window_size/2))
+  sd(window_data$ei)
+})
+face_ei_sd_df = data.frame(mi = face_mi_seq, ei_sd = face_ei_sd)
+plot_face_ei_sd = ggplot(data = face_ei_sd_df) + geom_line(aes(mi, ei_sd), color = "pink") + theme_classic() +
+  labs(title = "Forehead/Cheek",
+       x = "Melanin index",
+       y = "Erythema index standard deviation") + xlim(0, 120)
+
+# palm
+palm_mi_seq = seq(floor(quantile(palm_spectrum$mi, probs = 0.01)), ceiling(quantile(palm_spectrum$mi, probs = 0.99)), by = step_size)
+palm_ei_sd = sapply(palm_mi_seq, function(mi_val) {
+  window_data = palm_spectrum %>% filter(mi >= (mi_val - window_size/2) & mi < (mi_val + window_size/2))
+  sd(window_data$ei)
+})
+palm_ei_sd_df = data.frame(mi = palm_mi_seq, ei_sd = palm_ei_sd)
+plot_palm_ei_sd = ggplot(data = palm_ei_sd_df) + geom_line(aes(mi, ei_sd), color = "steelblue") + theme_classic() +
+  labs(title = "Palm",
+       x = "Melanin index",
+       y = "Erythema index standard deviation") + xlim(0, 120)
+
+wrap_plots(plot_face_ei_sd, plot_palm_ei_sd, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index sd and melanin index") & theme(legend.position = "bottom")
+
+pdf("output/ei_sd_mi_correlation.pdf", width = 10, height = 6)
+wrap_plots(plot_face_ei_sd, plot_palm_ei_sd, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index sd and melanin index") & theme(legend.position = "bottom")
+dev.off()
+```
+
+## Correlation between erythema index variability and melanin index for combined face and palm data
+
+```{r ei-sd-facepalm, fig.width=10, fig.height=6}
+plot_facepalm_ei = ggplot(data = facepalm_spectrum) + geom_point(aes(mi, ei), color = "purple", size = 0.8) + theme_classic() +
+  labs(title = "Forehead/Cheek and Palm",
+       x = "Melanin index",
+       y = "Erythema index") + xlim(0, 120)
+window_size = 20 # melanin index units
+step_size = 1 # melanin index units
+# face and palm combined
+facepalm_mi_seq = seq(floor(quantile(facepalm_spectrum$mi, probs = 0.01)), ceiling(quantile(facepalm_spectrum$mi, probs = 0.99)), by = step_size)
+facepalm_ei_sd = sapply(facepalm_mi_seq, function(mi_val) {
+  window_data = facepalm_spectrum %>% filter(mi >= (mi_val - window_size/2) & mi < (mi_val + window_size/2))
+  sd(window_data$ei)
+})
+facepalm_ei_sd_df = data.frame(mi = facepalm_mi_seq, ei_sd = facepalm_ei_sd)
+plot_facepalm_ei_sd = ggplot(data = facepalm_ei_sd_df) + geom_line(aes(mi, ei_sd), color = "purple") + theme_classic() +
+  labs(title = "Forehead/Cheek and Palm",
+       x = "Melanin index",
+       y = "Erythema index standard deviation") + xlim(0, 120)
+
+wrap_plots(plot_facepalm_ei, plot_facepalm_ei_sd, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
+
+pdf("output/facepalm_ei_mi_correlation.pdf", width = 10, height = 6)
+wrap_plots(plot_facepalm_ei, plot_facepalm_ei_sd, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
 dev.off()
 ```
