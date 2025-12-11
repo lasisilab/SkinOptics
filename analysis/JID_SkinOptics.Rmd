@@ -39,11 +39,12 @@ knitr::opts_chunk$set(
   - For each center MI value in the sequence, all EI values corresponding to MI values within the window (center MI ± 10) are collected, and their standard deviation is computed.
   - The center MI values range from the 1st to the 99th percentile of observed MI values.
 
-- FACE site refers to Forehead and Cheek, while PALM site refers to the Palm of the hand. 
+- FACE site refers to Forehead or Cheek, while PALM site refers to the Palm of the hand. 
 
 - Representative FACE MI: 
   - For each subject, the FACE MI is given by the Forehead MI if the Forehead MI is available; otherwise, it is the Cheek MI.
-  - For subjects with multiple measurements at the same FACE site, the average MI across those measurements is used.
+  - For subjects with multiple measurements at the same FACE site, we randomly select one measurement.
+  - Each subject has only one representative FACE reflectance spectra.
 
 - First derivatives of skin spectra are estimated using local polynomial regression with bandwidth selected by the dpill function, scaled by a factor of 0.7.
 
@@ -93,9 +94,20 @@ spectrum = spectrum %>% mutate(mi = 100 * `A680`,
                                ei = 100 * log10(`R680` / ((`R550` + `R560`)/2)))
 colnames(spectrum)[3] = "site" # rename G to site
 # extract face and palm spectra
-face_spectrum = spectrum %>% filter(site %in% c("Cheek", "Forehead"))
+face_ids = unique(issa$C[issa$G %in% c("Forehead", "Cheek")])
+face_spectrum = data.frame()
+for (id in face_ids) {
+  spectrum_id = spectrum %>% filter(C == id)
+  if (any(spectrum_id$site == "Forehead")) {
+    selected_spectrum = spectrum_id %>% filter(site == "Forehead") %>% slice_sample(n = 1)
+  } else {
+    selected_spectrum = spectrum_id %>% filter(site == "Cheek") %>% slice_sample(n = 1)
+  }
+  face_spectrum = rbind(face_spectrum, selected_spectrum)
+}
+# face_spectrum = spectrum %>% filter(site %in% c("Cheek", "Forehead"))
 face_spectrum$site = "Forehead/Cheek"
-palm_spectrum = spectrum %>% filter(site == "Palm")
+palm_spectrum = spectrum %>% filter(C %in% face_ids, site == "Palm")
 ```
 
 
@@ -244,13 +256,6 @@ drv_facer = t(apply(face_reflectance, 1, function(spec) {
 colnames(drv_facer) = wavelengths
 drv_facer_df = as.data.frame(drv_facer) %>% mutate(A = face_spectrum$A, mi = face_spectrum$mi)
 
-plot_drv_facer = PlotDerivative(drv_facer_df) + labs(
-      x = "Wavelength (nm)",
-      y = "Derivatives of skin reflectance",
-      title = "First derivatives of skin reflectance",
-      color = "Melanin index"
-    )
-
 drv_facea = t(apply(face_absorbance, 1, function(spec) {
   drv_est = locpoly(x=wavelengths, y=spec, drv=1, degree=2, bandwidth=dpill(wavelengths, spec) * 0.7, gridsize=length(wavelengths))
   drv_est$y
@@ -258,13 +263,6 @@ drv_facea = t(apply(face_absorbance, 1, function(spec) {
 
 colnames(drv_facea) = wavelengths
 drv_facea_df = as.data.frame(drv_facea) %>% mutate(A = face_spectrum$A, mi = face_spectrum$mi)
-
-plot_drv_facea = PlotDerivative(drv_facea_df) + labs(
-      x = "Wavelength (nm)",
-      y = "Derivatives of skin absorbance",
-      title = "First derivatives of skin absorbance",
-      color = "Melanin index"
-    )
 ```
 
 ```{r outliers}
@@ -302,7 +300,7 @@ drv_palmr = t(apply(palm_reflectance, 1, function(spec) {
 })) # estimate the first derivatives using local polynomials
 
 colnames(drv_palmr) = wavelengths
-drv_palmr_df = as.data.frame(drv_palmr) %>% mutate(A = palm_spectrum$A, mi = palm_spectrum$mi)
+drv_palmr_df = as.data.frame(drv_palmr) %>% mutate(A = palm_spectrum$A, C = palm_spectrum$C, mi = palm_spectrum$mi)
 plot_drv_palmr = PlotDerivative(drv_palmr_df) + labs(
       x = "Wavelength (nm)",
       y = "Derivatives of skin reflectance",
@@ -315,7 +313,7 @@ drv_palma = t(apply(palm_absorbance, 1, function(spec) {
   drv_est$y
 })) # estimate the first derivatives using local polynomials
 colnames(drv_palma) = wavelengths
-drv_palma_df = as.data.frame(drv_palma) %>% mutate(A = palm_spectrum$A, mi = palm_spectrum$mi)
+drv_palma_df = as.data.frame(drv_palma) %>% mutate(A = palm_spectrum$A, C = palm_spectrum$C, mi = palm_spectrum$mi)
 plot_drv_palma = PlotDerivative(drv_palma_df) + labs(
       x = "Wavelength (nm)",
       y = "Derivatives of skin absorbance",
@@ -430,14 +428,20 @@ drv_facea_df$class = eumelanin_classes_face
 
 eumelanin_classes_palm = cut(palm_spectrum$mi, breaks=c(0, 25, 50, 75, 100)) # no "High" class for palm
 eumelanin_classes_palm = factor(eumelanin_classes_palm, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high"))
-palm_spectrum$class = eumelanin_classes_palm
-drv_palmr_df$class = eumelanin_classes_palm
-drv_palma_df$class = eumelanin_classes_palm
+palm_spectrum$palm_class = eumelanin_classes_palm
+drv_palmr_df$palm_class = eumelanin_classes_palm
+drv_palma_df$palm_class = eumelanin_classes_palm
+
+palm_spectrum$face_class = eumelanin_classes_face[match(palm_spectrum$C, face_spectrum$C)]
+drv_palmr_df$face_class = palm_spectrum$face_class
+drv_palma_df$face_class = palm_spectrum$face_class
 
 # report the table of the number of subjects in each class
 kable(table(eumelanin_classes_face), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Forehead/Cheek)")
 kable(table(eumelanin_classes_palm), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Palm)")
 ```
+
+### Face reflectance derivatives by face eumelanin class
 
 ```{r plot-reflectance-by-class-face, fig.width=10, fig.height=3.5}
 plots_facer = list()
@@ -447,39 +451,65 @@ for (cls in levels(eumelanin_classes_face)) {
         x = "Wavelength (nm)",
         y = "Derivative",
         title = cls,
-        color = "Melanin index"
+        color = "Face melanin index"
       ) + ylim(-0.6, 0.8)
   plots_facer[[cls]] = p
 }
 
-wrap_plots(plots_facer, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin reflectance by eumelanin classes (Forehead/Cheek)") & theme(legend.position = "bottom")
+wrap_plots(plots_facer, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Face reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
 
 pdf("output/reflectance_derivative_face.pdf", width = 10, height = 3.5)
-wrap_plots(plots_facer, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin reflectance by eumelanin classes (Forehead/Cheek)") & theme(legend.position = "bottom")
+wrap_plots(plots_facer, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Face reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
 dev.off()
 ```
+
+### Palm reflectance derivatives by palm eumelanin class
 
 ```{r plot-reflectance-by-class-palm, fig.width=10, fig.height=4}
 plots_palmr = list()
 for (cls in levels(eumelanin_classes_palm)) {
-  cls_data = drv_palmr_df %>% filter(class == cls)
+  cls_data = drv_palmr_df %>% filter(palm_class == cls)
   p = PlotDerivative(cls_data) + labs(
         x = "Wavelength (nm)",
         y = "Derivative",
         title = cls,
-        color = "Melanin index"
+        color = "Palm melanin index"
       ) + ylim(-0.6, 0.8)
   plots_palmr[[cls]] = p
 }
 
-wrap_plots(plots_palmr, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin reflectance by eumelanin classes (PALM)") & theme(legend.position = "bottom")
+wrap_plots(plots_palmr, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm reflectance by Palm eumelanin classes") & theme(legend.position = "bottom")
 
 pdf("output/reflectance_derivative_palm.pdf", width = 10, height = 4)
-wrap_plots(plots_palmr, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin reflectance by eumelanin classes (PALM)") & theme(legend.position = "bottom")
+wrap_plots(plots_palmr, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm reflectance by Palm eumelanin classes") & theme(legend.position = "bottom")
+dev.off()
+```
+
+### Palm reflectance derivatives by face eumelanin class
+
+```{r plot-reflectance-by-class-palm-face, fig.width=10, fig.height=3.5}
+plots_palmr = list()
+for (cls in levels(eumelanin_classes_face)) {
+  cls_data = drv_palmr_df %>% filter(face_class == cls)
+  p = PlotDerivative(cls_data) + labs(
+        x = "Wavelength (nm)",
+        y = "Derivative",
+        title = cls,
+        color = "Face melanin index"
+      ) + ylim(-0.6, 0.8)
+  plots_palmr[[cls]] = p
+}
+
+wrap_plots(plots_palmr, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
+
+pdf("output/reflectance_derivative_palm_face.pdf", width = 10, height = 3.5)
+wrap_plots(plots_palmr, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
 dev.off()
 ```
 
 ## First derivatives of absorbance by eumelanin classes
+
+### Face absorbance derivatives by face eumelanin class
 
 ```{r plot-absorbance-by-class-face, fig.width=10, fig.height=3.5}
 plots_facea = list()
@@ -489,33 +519,56 @@ for (cls in levels(eumelanin_classes_face)) {
         x = "Wavelength (nm)",
         y = "Derivative",
         title = cls,
-        color = "Melanin index"
+        color = "Face melanin index"
       ) + ylim(-0.02, 0.02)
   plots_facea[[cls]] = p
 }
-wrap_plots(plots_facea, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin absorbance by eumelanin classes (Forehead/Cheek)") & theme(legend.position = "bottom")
+wrap_plots(plots_facea, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Face absorbance by Face eumelanin classes") & theme(legend.position = "bottom")
 
 pdf("output/absorbance_derivative_face.pdf", width = 10, height = 3.5)
-wrap_plots(plots_facea, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin absorbance by eumelanin classes (Forehead/Cheek)") & theme(legend.position = "bottom")
+wrap_plots(plots_facea, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Face absorbance by Face eumelanin classes") & theme(legend.position = "bottom")
 dev.off()
 ```
+
+### Palm absorbance derivatives by palm eumelanin class
 
 ```{r plot-absorbance-by-class-palm, fig.width=10, fig.height=4}
 plots_palma = list()
 for (cls in levels(eumelanin_classes_palm)) {
-  cls_data = drv_palma_df %>% filter(class == cls)
+  cls_data = drv_palma_df %>% filter(palm_class == cls)
   p = PlotDerivative(cls_data) + labs(
         x = "Wavelength (nm)",
         y = "Derivative",
         title = cls,
-        color = "Melanin index"
+        color = "Palm melanin index"
       ) + ylim(-0.02, 0.02)
   plots_palma[[cls]] = p
 }
-wrap_plots(plots_palma, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin absorbance by eumelanin classes (PALM)") & theme(legend.position = "bottom")
+wrap_plots(plots_palma, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm absorbance by Palm eumelanin classes") & theme(legend.position = "bottom")
 
 pdf("output/absorbance_derivative_palm.pdf", width = 10, height = 4)
-wrap_plots(plots_palma, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of skin absorbance by eumelanin classes (PALM)") & theme(legend.position = "bottom")
+wrap_plots(plots_palma, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm absorbance by Palm eumelanin classes") & theme(legend.position = "bottom")
+dev.off()
+```
+
+### Palm absorbance derivatives by face eumelanin class
+
+```{r plot-absorbance-by-class-palm-face, fig.width=10, fig.height=3.5}
+plots_palma = list()
+for (cls in levels(eumelanin_classes_face)) {
+  cls_data = drv_palma_df %>% filter(face_class == cls)
+  p = PlotDerivative(cls_data) + labs(
+        x = "Wavelength (nm)",
+        y = "Derivative",
+        title = cls,
+        color = "Palm melanin index"
+      ) + ylim(-0.02, 0.02)
+  plots_palma[[cls]] = p
+}
+wrap_plots(plots_palma, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm absorbance by Face eumelanin classes") & theme(legend.position = "bottom")
+
+pdf("output/absorbance_derivative_palm_face.pdf", width = 10, height = 3.5)
+wrap_plots(plots_palma, nrow = 1, guides = "collect") + plot_annotation(title = "First derivatives of Palm absorbance by Face eumelanin classes") & theme(legend.position = "bottom")
 dev.off()
 ```
 
