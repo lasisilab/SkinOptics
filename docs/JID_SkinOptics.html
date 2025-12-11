@@ -362,7 +362,7 @@ Data</h1>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
 <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
-workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+workflowr <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span>
 </button>
 </p>
@@ -373,8 +373,8 @@ aria-hidden="true"></span>
 </li>
 <li>
 <a data-toggle="tab" href="#checks"> Checks <span
-class="glyphicon glyphicon-exclamation-sign text-danger"
-aria-hidden="true"></span> </a>
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
 </li>
 <li>
 <a data-toggle="tab" href="#versions">Past versions</a>
@@ -387,9 +387,9 @@ aria-hidden="true"></span> </a>
 </p>
 <p>
 <strong>Checks:</strong> <span
-class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
 <span class="glyphicon glyphicon-exclamation-sign text-danger"
-aria-hidden="true"></span> 1
+aria-hidden="true"></span> 0
 </p>
 <p>
 <strong>Knit directory:</strong> <code>SkinOptics/</code> <span
@@ -412,21 +412,18 @@ versions</em> tab lists the development history.
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
-<span class="glyphicon glyphicon-exclamation-sign text-danger"
-aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
-changes </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
 </p>
 </div>
-<div id="strongRMarkdownfilestronguncommittedchanges"
+<div id="strongRMarkdownfilestronguptodate"
 class="panel-collapse collapse">
 <div class="panel-body">
-<p>The R Markdown file has unstaged changes. To know which version of
-the R Markdown file created these results, you’ll want to first commit
-it to the Git repo. If you’re still working on the analysis, you can
-ignore this warning. When you’re finished, you can run
-<code>wflow_publish</code> to commit the R Markdown file and build the
-HTML.</p>
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
 </div>
 </div>
 </div>
@@ -517,15 +514,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree53d4f9cc12bea73f9220874da5d95e1da7d9ace9targetblank53d4f9ca">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreee11deee0b468394e1baa5088bdc0879af630710dtargetblanke11deeea">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/lasisilab/SkinOptics/tree/53d4f9cc12bea73f9220874da5d95e1da7d9ace9" target="_blank">53d4f9c</a>
+<a href="https://github.com/lasisilab/SkinOptics/tree/e11deee0b468394e1baa5088bdc0879af630710d" target="_blank">e11deee</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree53d4f9cc12bea73f9220874da5d95e1da7d9ace9targetblank53d4f9ca"
+id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreee11deee0b468394e1baa5088bdc0879af630710dtargetblanke11deeea"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -535,7 +532,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/lasisilab/SkinOptics/tree/53d4f9cc12bea73f9220874da5d95e1da7d9ace9" target="_blank">53d4f9c</a>.
+<a href="https://github.com/lasisilab/SkinOptics/tree/e11deee0b468394e1baa5088bdc0879af630710d" target="_blank">e11deee</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -550,24 +547,16 @@ were generated:
 </p>
 <pre><code>
 Ignored files:
+    Ignored:    .RData
     Ignored:    .Rhistory
     Ignored:    .Rproj.user/
 
-Untracked files:
-    Untracked:  output/ei_mi_correlation.pdf
-
 Unstaged changes:
-    Modified:   analysis/JID_MelaninSiteAttenuation.Rmd
-    Modified:   analysis/JID_SkinOptics.Rmd
-    Modified:   output/absorbance_derivative_face.pdf
-    Modified:   output/absorbance_derivative_palm.pdf
-    Modified:   output/absorbance_mi_sd.pdf
-    Modified:   output/heatmap.pdf
-    Modified:   output/mi_distribution.pdf
-    Modified:   output/reflectance_derivative_face.pdf
-    Modified:   output/reflectance_derivative_palm.pdf
-    Modified:   output/reflectance_mi_sd.pdf
-    Modified:   output/reflectance_mi_sd_regression.pdf
+    Modified:   analysis/.DS_Store
+    Deleted:    analysis/JID_MelaninSiteAttenuation.Rmd
+    Deleted:    analysis/issa-spectrum.Rmd
+    Deleted:    analysis/skin-reflectance.Rmd
+    Deleted:    analysis/sliding-window.Rmd
 
 </code></pre>
 <p>
@@ -612,6 +601,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/e11deee0b468394e1baa5088bdc0879af630710d/analysis/JID_SkinOptics.Rmd" target="_blank">e11deee</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+calculate EI
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/lasisilab/SkinOptics/e11deee0b468394e1baa5088bdc0879af630710d/docs/JID_SkinOptics.html" target="_blank">e11deee</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+calculate EI
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -1178,6 +1201,43 @@ Junhui He
 class="section level2">
 <h2>Correlation between erythema index and melanin index</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/ei-mi-correlation-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-ei-mi-correlation-1">
+Past versions of ei-mi-correlation-1.png
+</button>
+</p>
+<div id="fig-ei-mi-correlation-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/e11deee0b468394e1baa5088bdc0879af630710d/docs/figure/JID_SkinOptics.Rmd/ei-mi-correlation-1.png" target="_blank">e11deee</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 <br>
