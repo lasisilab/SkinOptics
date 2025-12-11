@@ -9,7 +9,7 @@ navbar:
     href: about.html
   - text: License
     href: license.html
-  - text: Skin Optics
+  - text: "Skin Optics"
     href: JID_SkinOptics.html
 output:
   workflowr::wflow_html:
