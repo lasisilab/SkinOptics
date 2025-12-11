@@ -1,6 +1,5 @@
 ---
-title: "Objective, but not unbiased: accounting for melanin‑ and site-dependent attenuation
-  in the erythema band"
+title: "Skin Optics Analysis based on ISSA Data"
 author: "Junhui He"
 date: "`r Sys.Date()`"
 output: html_document
@@ -33,6 +32,8 @@ knitr::opts_chunk$set(
 # Clarifications
 
 - Melanin index (MI) is calculated based on skin reflectance at 680 nm. Specifically, MI = -100 * log10(R680 / 100), where R680 is the reflectance percentage at 680 nm.
+
+- Erythema index (EI) is calculated as EI = 100 * log10(R680 / ((R550 + R560)/2)), where R550 and R560 are the reflectance percentages at 550 nm and 560 nm, respectively.
 
 - FACE site refers to Forehead and Cheek, while PALM site refers to the Palm of the hand. 
 
@@ -526,9 +527,7 @@ sd_abs_palm = apply(drv_palma, MARGIN = 1, sd)
 sd_palm = data.frame(site = "Palm", sd_ref = sd_ref_palm, sd_abs = sd_abs_palm, mi = palm_spectrum$mi) %>% mutate(log_mi = log(mi))
 ```
 
-## Correlation between derivative sd and melanin index of reflectance
-
-### Reflectance
+## Correlation between reflectance derivative sd and melanin index
 
 ```{r plot-derivative-sd-mi-ref, fig.width=10, fig.height=6}
 # reflectance
@@ -570,7 +569,7 @@ wrap_plots(plot_face_reg, plot_palm_reg, nrow = 1, guides = "collect") + plot_an
 dev.off()
 ```
 
-### Absorbance
+## Correlation between absorbance derivative sd and melanin index
 
 ```{r plot-derivative-sd-mi-abs, fig.width=10, fig.height=6}
 # absorbance
@@ -587,5 +586,25 @@ wrap_plots(plot_face_abs, plot_palm_abs, nrow = 1, guides = "collect") + plot_an
 
 pdf("output/absorbance_mi_sd.pdf", width = 10, height = 6)
 wrap_plots(plot_face_abs, plot_palm_abs, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between absorbance derivative sd and melanin index") & theme(legend.position = "bottom")
+dev.off()
+```
+
+## Correlation between erythema index and melanin index
+
+```{r ei-mi-correlation, fig.width=10, fig.height=6}
+# face
+plot_face_ei = ggplot(data = face_spectrum) + geom_point(aes(mi, ei), color = "pink", size = 0.8) + theme_classic() +
+  labs(title = "Forehead/Cheek",
+       x = "Melanin index",
+       y = "Erythema index") + xlim(0, 120) + ylim(10, 55)
+# palm
+plot_palm_ei = ggplot(data = palm_spectrum) + geom_point(aes(mi, ei), color = "steelblue", size = 0.8) + theme_classic() +
+  labs(title = "Palm",
+       x = "Melanin index",
+       y = "Erythema index") + xlim(0, 120) + ylim(10, 55)
+wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
+
+pdf("output/ei_mi_correlation.pdf", width = 10, height = 6)
+wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
 dev.off()
 ```

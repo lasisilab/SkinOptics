@@ -587,3 +587,23 @@ pdf("output/absorbance_mi_sd.pdf", width = 10, height = 6)
 wrap_plots(plot_face_abs, plot_palm_abs, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between absorbance derivative sd and melanin index") & theme(legend.position = "bottom")
 dev.off()
 ```
+
+## Correlation between erythema index and melanin index
+
+```{r ei-mi-correlation, fig.width=10, fig.height=6}
+# face
+plot_face_ei = ggplot(data = face_spectrum) + geom_point(aes(mi, ei), color = "pink", size = 0.8) + theme_classic() +
+  labs(title = "Forehead/Cheek",
+       x = "Melanin index",
+       y = "Erythema index") + xlim(0, 120) + ylim(10, 55)
+# palm
+plot_palm_ei = ggplot(data = palm_spectrum) + geom_point(aes(mi, ei), color = "steelblue", size = 0.8) + theme_classic() +
+  labs(title = "Palm",
+       x = "Melanin index",
+       y = "Erythema index") + xlim(0, 120) + ylim(10, 55)
+wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
+
+pdf("output/ei_mi_correlation.pdf", width = 10, height = 6)
+wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
+dev.off()
+```

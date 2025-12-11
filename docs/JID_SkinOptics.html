@@ -13,7 +13,7 @@
 
 <meta name="date" content="2025-12-11" />
 
-<title>Objective, but not unbiased: accounting for melanin‑ and site-dependent attenuation in the erythema band</title>
+<title>Skin Optics Analysis based on ISSA Data</title>
 
 <script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -351,8 +351,8 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Objective, but not unbiased: accounting for
-melanin‑ and site-dependent attenuation in the erythema band</h1>
+<h1 class="title toc-ignore">Skin Optics Analysis based on ISSA
+Data</h1>
 <h4 class="author">Junhui He</h4>
 <h4 class="date">2025-12-11</h4>
 
@@ -421,10 +421,10 @@ changes </a>
 <div id="strongRMarkdownfilestronguncommittedchanges"
 class="panel-collapse collapse">
 <div class="panel-body">
-<p>The R Markdown is untracked by Git. To know which version of the R
-Markdown file created these results, you’ll want to first commit it to
-the Git repo. If you’re still working on the analysis, you can ignore
-this warning. When you’re finished, you can run
+<p>The R Markdown file has unstaged changes. To know which version of
+the R Markdown file created these results, you’ll want to first commit
+it to the Git repo. If you’re still working on the analysis, you can
+ignore this warning. When you’re finished, you can run
 <code>wflow_publish</code> to commit the R Markdown file and build the
 HTML.</p>
 </div>
@@ -517,15 +517,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree25733b080be91317a1d3ef3e47f0d1369c1ccecftargetblank25733b0a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree53d4f9cc12bea73f9220874da5d95e1da7d9ace9targetblank53d4f9ca">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/lasisilab/SkinOptics/tree/25733b080be91317a1d3ef3e47f0d1369c1ccecf" target="_blank">25733b0</a>
+<a href="https://github.com/lasisilab/SkinOptics/tree/53d4f9cc12bea73f9220874da5d95e1da7d9ace9" target="_blank">53d4f9c</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree25733b080be91317a1d3ef3e47f0d1369c1ccecftargetblank25733b0a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree53d4f9cc12bea73f9220874da5d95e1da7d9ace9targetblank53d4f9ca"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -535,7 +535,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/lasisilab/SkinOptics/tree/25733b080be91317a1d3ef3e47f0d1369c1ccecf" target="_blank">25733b0</a>.
+<a href="https://github.com/lasisilab/SkinOptics/tree/53d4f9cc12bea73f9220874da5d95e1da7d9ace9" target="_blank">53d4f9c</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -554,21 +554,20 @@ Ignored files:
     Ignored:    .Rproj.user/
 
 Untracked files:
-    Untracked:  analysis/JID_SkinOptics.Rmd
-    Untracked:  output/absorbance_derivative_face.pdf
-    Untracked:  output/absorbance_derivative_palm.pdf
-    Untracked:  output/absorbance_mi_sd.pdf
-    Untracked:  output/heatmap.pdf
-    Untracked:  output/mi_distribution.pdf
-    Untracked:  output/reflectance_derivative_face.pdf
-    Untracked:  output/reflectance_derivative_palm.pdf
-    Untracked:  output/reflectance_mi_sd.pdf
-    Untracked:  output/reflectance_mi_sd_regression.pdf
+    Untracked:  output/ei_mi_correlation.pdf
 
 Unstaged changes:
     Modified:   analysis/JID_MelaninSiteAttenuation.Rmd
-    Modified:   data/.DS_Store
-    Modified:   output/.DS_Store
+    Modified:   analysis/JID_SkinOptics.Rmd
+    Modified:   output/absorbance_derivative_face.pdf
+    Modified:   output/absorbance_derivative_palm.pdf
+    Modified:   output/absorbance_mi_sd.pdf
+    Modified:   output/heatmap.pdf
+    Modified:   output/mi_distribution.pdf
+    Modified:   output/reflectance_derivative_face.pdf
+    Modified:   output/reflectance_derivative_palm.pdf
+    Modified:   output/reflectance_mi_sd.pdf
+    Modified:   output/reflectance_mi_sd_regression.pdf
 
 </code></pre>
 <p>
@@ -584,9 +583,72 @@ have uncommitted changes.
 </div>
 <div id="versions" class="tab-pane fade">
 <p>
-There are no past versions. Publish this analysis with
-<code>wflow_publish()</code> to start tracking its development.
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/JID_SkinOptics.Rmd</code>) and
+HTML (<code>docs/JID_SkinOptics.html</code>) files. If you’ve configured
+a remote Git repository (see <code>?wflow_git_remote</code>), click on
+the hyperlinks in the table below to view the files as they were in that
+past version.
 </p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/analysis/JID_SkinOptics.Rmd" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+create SkinOptics
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/lasisilab/SkinOptics/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/JID_SkinOptics.html" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+create SkinOptics
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 <hr>
 </div>
 </div>
@@ -597,6 +659,9 @@ There are no past versions. Publish this analysis with
 <li><p>Melanin index (MI) is calculated based on skin reflectance at 680
 nm. Specifically, MI = -100 * log10(R680 / 100), where R680 is the
 reflectance percentage at 680 nm.</p></li>
+<li><p>Erythema index (EI) is calculated as EI = 100 * log10(R680 /
+((R550 + R560)/2)), where R550 and R560 are the reflectance percentages
+at 550 nm and 560 nm, respectively.</p></li>
 <li><p>FACE site refers to Forehead and Cheek, while PALM site refers to
 the Palm of the hand.</p></li>
 <li><p>Representative FACE MI:</p>
@@ -627,6 +692,43 @@ follows:</p>
 <div id="distribution-of-melanin-index-by-site" class="section level2">
 <h2>Distribution of melanin index by site</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/sample%20distribution-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-no-spaces-sample-distribution-1">
+Past versions of "sample distribution-1.png"
+</button>
+</p>
+<div id="fig-no-spaces-sample-distribution-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/sample distribution-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
@@ -636,6 +738,43 @@ class="section level2">
 <h2>Unique subjects per site across representative face melanin index
 bins (Heatmap)</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/heatmap-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-heatmap-1">
+Past versions of heatmap-1.png
+</button>
+</p>
+<div id="fig-heatmap-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/heatmap-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
@@ -702,9 +841,83 @@ class="section level2">
 </tbody>
 </table>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-reflectance-by-class-face-1">
+Past versions of plot-reflectance-by-class-face-1.png
+</button>
+</p>
+<div id="fig-plot-reflectance-by-class-face-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-face-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-palm-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-reflectance-by-class-palm-1">
+Past versions of plot-reflectance-by-class-palm-1.png
+</button>
+</p>
+<div id="fig-plot-reflectance-by-class-palm-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-palm-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
@@ -712,20 +925,128 @@ class="section level2">
 class="section level2">
 <h2>First derivatives of absorbance by eumelanin classes</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-absorbance-by-class-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-absorbance-by-class-face-1">
+Past versions of plot-absorbance-by-class-face-1.png
+</button>
+</p>
+<div id="fig-plot-absorbance-by-class-face-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/plot-absorbance-by-class-face-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-absorbance-by-class-palm-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-absorbance-by-class-palm-1">
+Past versions of plot-absorbance-by-class-palm-1.png
+</button>
+</p>
+<div id="fig-plot-absorbance-by-class-palm-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/plot-absorbance-by-class-palm-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
 <div
-id="correlation-between-derivative-sd-and-melanin-index-of-reflectance"
+id="correlation-between-reflectance-derivative-sd-and-melanin-index"
 class="section level2">
-<h2>Correlation between derivative sd and melanin index of
-reflectance</h2>
-<div id="reflectance" class="section level3">
-<h3>Reflectance</h3>
+<h2>Correlation between reflectance derivative sd and melanin index</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-ref-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-derivative-sd-mi-ref-1">
+Past versions of plot-derivative-sd-mi-ref-1.png
+</button>
+</p>
+<div id="fig-plot-derivative-sd-mi-ref-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-ref-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 <ul>
@@ -769,12 +1090,94 @@ Residual standard error: 0.02377 on 776 degrees of freedom
 Multiple R-squared:  0.5671,    Adjusted R-squared:  0.5665 
 F-statistic:  1016 on 1 and 776 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p><img src="figure/JID_SkinOptics.Rmd/regression-drv-mi-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-regression-drv-mi-1">
+Past versions of regression-drv-mi-1.png
+</button>
+</p>
+<div id="fig-regression-drv-mi-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/regression-drv-mi-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 </div>
-<div id="absorbance" class="section level3">
-<h3>Absorbance</h3>
+<div id="correlation-between-absorbance-derivative-sd-and-melanin-index"
+class="section level2">
+<h2>Correlation between absorbance derivative sd and melanin index</h2>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-abs-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-derivative-sd-mi-abs-1">
+Past versions of plot-derivative-sd-mi-abs-1.png
+</button>
+</p>
+<div id="fig-plot-derivative-sd-mi-abs-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/53d4f9cc12bea73f9220874da5d95e1da7d9ace9/docs/figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-abs-1.png" target="_blank">53d4f9c</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<pre><code>quartz_off_screen 
+                2 </code></pre>
+</div>
+<div id="correlation-between-erythema-index-and-melanin-index"
+class="section level2">
+<h2>Correlation between erythema index and melanin index</h2>
+<p><img src="figure/JID_SkinOptics.Rmd/ei-mi-correlation-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre><code>quartz_off_screen 
                 2 </code></pre>
 <br>
@@ -810,19 +1213,19 @@ other attached packages:
 
 loaded via a namespace (and not attached):
  [1] sass_0.4.10        generics_0.1.4     lattice_0.22-7     stringi_1.8.7     
- [5] hms_1.1.4          digest_0.6.39      magrittr_2.0.4     evaluate_1.0.5    
- [9] grid_4.3.1         timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0     
+ [5] hms_1.1.4          digest_0.6.39      magrittr_2.0.4     timechange_0.3.0  
+ [9] evaluate_1.0.5     grid_4.3.1         RColorBrewer_1.1-3 fastmap_1.2.0     
 [13] Matrix_1.5-4.1     rprojroot_2.1.1    workflowr_1.7.2    jsonlite_2.0.0    
-[17] zip_2.3.3          promises_1.5.0     mgcv_1.8-42        viridisLite_0.4.2 
-[21] jquerylib_0.1.4    cli_3.6.5          rlang_1.1.6        splines_4.3.1     
-[25] withr_3.0.2        cachem_1.1.0       yaml_2.3.11        otel_0.2.0        
-[29] tools_4.3.1        tzdb_0.5.0         httpuv_1.6.16      vctrs_0.6.5       
-[33] R6_2.6.1           lifecycle_1.0.4    git2r_0.36.2       fs_1.6.6          
-[37] pkgconfig_2.0.3    pillar_1.11.1      bslib_0.9.0        later_1.4.4       
-[41] gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0         xfun_0.54         
-[45] tidyselect_1.2.1   farver_2.1.2       nlme_3.1-168       htmltools_0.5.9   
-[49] labeling_0.4.3     rmarkdown_2.30     compiler_4.3.1     S7_0.2.1          </code></pre>
-</div>
+[17] zip_2.3.3          whisker_0.4.1      promises_1.5.0     mgcv_1.8-42       
+[21] viridisLite_0.4.2  jquerylib_0.1.4    cli_3.6.5          rlang_1.1.6       
+[25] splines_4.3.1      withr_3.0.2        cachem_1.1.0       yaml_2.3.11       
+[29] otel_0.2.0         tools_4.3.1        tzdb_0.5.0         httpuv_1.6.16     
+[33] vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4    git2r_0.36.2      
+[37] fs_1.6.6           pkgconfig_2.0.3    pillar_1.11.1      bslib_0.9.0       
+[41] later_1.4.4        gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0        
+[45] xfun_0.54          tidyselect_1.2.1   farver_2.1.2       nlme_3.1-168      
+[49] htmltools_0.5.9    labeling_0.4.3     rmarkdown_2.30     compiler_4.3.1    
+[53] S7_0.2.1          </code></pre>
 </div>
 </div>
 </div>
