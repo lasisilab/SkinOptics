@@ -1,0 +1,139 @@
+---
+title: "skin-map"
+author: "Tina Lasisi"
+date: "2025-12-16"
+output: workflowr::wflow_html
+editor_options:
+  chunk_output_type: console
+---
+
+## Introduction
+
+```{r, fig.width=12, fig.height=8}
+library(sf)
+library(terra)
+library(ggplot2)
+library(rnaturalearth)
+library(dplyr)
+
+# 1) Basemap - use coastlines instead of country polygons to avoid border artifacts
+world <- ne_coastline(scale = "medium", returnclass = "sf") |>
+  st_make_valid()
+
+# For masking, we still need land polygons (but won't draw borders)
+# Filter out small islands by area (keep only larger landmasses)
+land <- ne_download(scale = "medium", type = "land", category = "physical", returnclass = "sf") |>
+  st_make_valid()
+land$area <- st_area(land)
+land <- land[land$area > units::set_units(5e10, "m^2"), ]  # Keep landmasses > 50,000 km²
+
+# 2) Actual study site locations
+points_overlay <- data.frame(
+  lat = c(53.3811, 38.3452, 39.9042, 41.8057, 35.6074, 33.6844, 13.7563, 35.5606, 21.4858),
+  lon = c(-1.4701, -0.4810, 116.4074, 123.4328, 140.1063, 73.0479, 100.5018, 45.4300, 39.1925),
+  label = c("UK", "Alicante", "Beijing", "Liaoning", "Chiba", "Islamabad", "Bangkok", "Sulaimani", "Jeddah"),
+  location = c("UK", "Alicante, Spain", "Beijing, China", "Liaoning, China", "Chiba, Japan", "Islamabad, Pakistan", "Bangkok, Thailand", "Sulaimani, Iraq", "Jeddah, Saudi Arabia"),
+  nudge_y = c(800000, 800000, 1400000, 200000, 1000000, 1200000, 800000, 400000, 800000)
+)
+
+pts <- st_as_sf(points_overlay, coords = c("lon","lat"), crs = 4326)
+
+# 3) Project everything to match the raster projection
+world_robin <- st_transform(world, "ESRI:54030")
+pts_robin   <- st_transform(pts, "ESRI:54030")
+
+# 4) Create a placeholder raster masked to land only (like Jablonski maps)
+# First create in WGS84 with high resolution to avoid artifacts
+r_wgs84 <- rast(nrows = 720, ncols = 1440)
+crs(r_wgs84) <- "+proj=longlat +datum=WGS84"
+ext(r_wgs84) <- c(-180, 180, -90, 90)
+
+# Create a latitude-based gradient (darkest between 15°N-10°S, gradient to 25 at poles)
+# Melanin Index scale: 25 (lightest) to 120 (darkest between 15°N-10°S)
+lat_values <- yFromRow(r_wgs84, 1:nrow(r_wgs84))
+
+# Anchor: 15°N to 10°S gets max values (95-120)
+# North of 15°N: gradient from 95 down to 25 at 66.5°N
+# South of -10°S: gradient from 95 down to 25 at -60°S
+lat_gradient <- sapply(lat_values, function(lat) {
+  if (lat >= -10 && lat <= 15) {
+    # Peak zone: -10°S to 15°N, values 95-120 (highest at ~2.5°N)
+    120 - abs(lat - 2.5) * (25 / 12.5)
+  } else if (lat > 15) {
+    # North of 15°N: linear gradient from 95 at 15°N to 25 at 66.5°N
+    95 - (lat - 15) * (70 / 51.5)
+  } else {
+    # South of -10°S: linear gradient from 95 at -10°S to 25 at -60°S
+    95 - (abs(lat) - 10) * (70 / 50)
+  }
+})
+# Clamp values to 25-120 range
+lat_gradient <- pmax(25, pmin(120, lat_gradient))
+r_wgs84[] <- rep(lat_gradient, each = ncol(r_wgs84))
+
+# Defer masking until after reprojection to avoid alignment artefacts
+# Exclude Antarctica by filtering latitudes south of -60°
+land_centroids <- st_coordinates(st_centroid(st_geometry(land)))
+land_no_antarctica <- land[land_centroids[,2] > -60, ]
+
+# Project to Robinson using bilinear interpolation to avoid creating
+# whole-row NAs from resampling
+r_robin <- project(r_wgs84, "+proj=robin +datum=WGS84", method = "bilinear")
+
+# Mask to land areas in the Robinson CRS (exclude Antarctica)
+land_robin_vect <- vect(st_transform(land_no_antarctica, "+proj=robin +datum=WGS84"))
+r_robin <- mask(r_robin, land_robin_vect)
+
+# Remove Arctic regions (latitude > 66.5 N) by masking with an inverse bbox
+arctic_bbox <- st_bbox(c(xmin = -180, xmax = 180, ymin = 66.5, ymax = 90), crs = st_crs(4326))
+arctic_poly <- st_as_sfc(arctic_bbox)
+arctic_robin <- st_transform(st_as_sf(arctic_poly), "+proj=robin +datum=WGS84")
+r_robin <- mask(r_robin, vect(arctic_robin), inverse = TRUE)
+
+# Fill small isolated NA gaps using a 3x3 focal mean, then replace remaining
+# isolated NAs where a local mean exists
+r_robin_filled <- focal(r_robin, w = matrix(1,3,3), fun = mean, na.policy = "only", na.rm = TRUE)
+r_robin[is.na(r_robin)] <- r_robin_filled[is.na(r_robin)]
+
+# Convert raster to data frame for ggplot
+r_df <- as.data.frame(r_robin, xy = TRUE, na.rm = TRUE)
+names(r_df)[3] <- "melanin_index"
+
+ggplot() +
+  # Melanin Index surface (use geom_tile for better edge handling)
+  geom_tile(data = r_df, aes(x = x, y = y, fill = melanin_index)) +
+
+  # Coastlines on top (no country borders)
+  geom_sf(data = st_transform(world, "+proj=robin +datum=WGS84"), 
+          fill = NA, linewidth = 0.2, color = "grey30") +
+
+  # Study site locations
+  geom_sf(data = pts_robin, size = 3, color = "red", alpha = 0.9) +
+
+  # Site labels with background bubbles for better readability
+  geom_sf_label(data = pts_robin, aes(label = label), size = 3.5,
+                nudge_y = points_overlay$nudge_y, 
+                fontface = "bold", 
+                label.padding = unit(0.3, "lines"),
+                label.r = unit(0.25, "lines"),
+                alpha = 0.85) +
+
+  coord_sf(crs = st_crs(world_robin), datum = NA) +
+
+  scale_fill_gradientn(
+    colours = c("#FBF3E6", "#E8C9A0", "#D4A574", "#B8784E", "#8B5A2B", "#5D4037", "#3E2723"),
+    values = scales::rescale(c(25, 35, 50, 65, 80, 100, 120)),  # Anchor midpoint at 50 MI
+    limits = c(25, 120),
+    name = "Melanin\nIndex"
+  ) +
+
+  theme_minimal(base_size = 14) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "right",
+        plot.margin = margin(10, 10, 10, 10))
+```
+
