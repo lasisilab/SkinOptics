@@ -154,9 +154,9 @@ PlotReflectance <- function(data, sample_size = NULL) {
       y = "Reflectance percentage of skin",
       color = "Melanin index"
     ) +
-    guides(color = guide_colorbar(reverse = TRUE)) +
+    guides(color = guide_colorbar(reverse = TRUE)) # +
     # Highlight the region used for melanin index calculation
-    geom_vline(xintercept = 680, color = "#ff0000")
+    # geom_vline(xintercept = 680, color = "#ff0000")
   
   return(plot)
 }
@@ -416,9 +416,6 @@ theme(
 dev.off()
 ```
 
-
-## First derivatives of reflectance by eumelanin classes
-
 ```{r eumelanin-class}
 eumelanin_classes_face = cut(face_spectrum$mi, breaks=c(0, 25, 50, 75, 100, 150))
 eumelanin_classes_face = factor(eumelanin_classes_face, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high", "High"))
@@ -440,6 +437,73 @@ drv_palma_df$face_class = palm_spectrum$face_class
 kable(table(eumelanin_classes_face), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Forehead/Cheek)")
 kable(table(eumelanin_classes_palm), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Palm)")
 ```
+
+## Reflectance by eumelanin classes
+
+### Face reflectance by face eumelanin class
+
+```{r plot-raw-reflectance-by-class-face, fig.width=10, fig.height=3.5}
+plots_faceraw = list()
+for (cls in levels(eumelanin_classes_face)) {
+  cls_data = face_spectrum %>% filter(class == cls)
+  p = PlotReflectance(cls_data) + labs(
+        x = "Wavelength (nm)",
+        y = "Reflectance",
+        title = cls,
+        color = "Face melanin index"
+      ) + ylim(0, 75)
+  plots_faceraw[[cls]] = p
+}
+
+wrap_plots(plots_faceraw, nrow = 1, guides = "collect") + plot_annotation(title = "Face reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
+
+pdf("output/reflectance_face.pdf", width = 10, height = 3.5)
+wrap_plots(plots_faceraw, nrow = 1, guides = "collect") + plot_annotation(title = "Face reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
+dev.off()
+```
+
+### Palm reflectance by palm eumelanin class
+
+```{r plot-raw-reflectance-by-class-palm, fig.width=10, fig.height=4}
+plots_palmraw = list()
+for (cls in levels(eumelanin_classes_palm)) {
+  cls_data = palm_spectrum %>% filter(palm_class == cls)
+  p = PlotReflectance(cls_data) + labs(
+        x = "Wavelength (nm)",
+        y = "Reflectance",
+        title = cls,
+        color = "Palm melanin index"
+      ) + ylim(0, 75)
+  plots_palmraw[[cls]] = p
+}
+
+wrap_plots(plots_palmraw, nrow = 1, guides = "collect") + plot_annotation(title = "Palm reflectance by Palm eumelanin classes") & theme(legend.position = "bottom")
+pdf("output/reflectance_palm.pdf", width = 10, height = 4)
+wrap_plots(plots_palmraw, nrow = 1, guides = "collect") + plot_annotation(title = "Palm reflectance by Palm eumelanin classes") & theme(legend.position = "bottom")
+dev.off()
+```
+
+### Palm reflectance by face eumelanin class
+```{r plot-raw-reflectance-by-class-palm-face, fig.width=10, fig.height=3.5}
+plots_palmraw = list()
+for (cls in levels(eumelanin_classes_face)) {
+  cls_data = palm_spectrum %>% filter(face_class == cls)
+  p = PlotReflectance(cls_data) + labs(
+        x = "Wavelength (nm)",
+        y = "Reflectance",
+        title = cls,
+        color = "Face melanin index"
+      ) + ylim(0, 75)
+  plots_palmraw[[cls]] = p
+}
+
+wrap_plots(plots_palmraw, nrow = 1, guides = "collect") + plot_annotation(title = "Palm reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
+pdf("output/reflectance_palm_face.pdf", width = 10, height = 3.5)
+wrap_plots(plots_palmraw, nrow = 1, guides = "collect") + plot_annotation(title = "Palm reflectance by Face eumelanin classes") & theme(legend.position = "bottom")
+dev.off()
+```
+
+## First derivatives of reflectance by eumelanin classes
 
 ### Face reflectance derivatives by face eumelanin class
 
@@ -589,11 +653,11 @@ sd_palm = data.frame(site = "Palm", sd_ref = sd_ref_palm, sd_abs = sd_abs_palm, 
 ```{r plot-derivative-sd-mi-ref, fig.width=10, fig.height=6}
 # reflectance
 plot_face_ref = ggplot(data = sd_face) + geom_point(aes(log_mi, sd_ref), color = "pink", size = 0.8) + theme_classic() +
-  labs(title = "Forehead/Cheek Reflectance",
+  labs(title = paste0("Forehead/Cheek Reflectance (n=", nrow(sd_face), ")"),
        x = "log(Melanin index)",
        y = "standard deviation of derivatives") + ylim(0, 0.25) + xlim(2.75, 4.75)
 plot_palm_ref = ggplot(data = sd_palm) + geom_point(aes(log_mi, sd_ref), color = "steelblue", size = 0.8) + theme_classic() +
-  labs(title = "Palm Reflectance",
+  labs(title = paste0("Palm Reflectance (n=", nrow(sd_palm), ")"),
        x = "log(Melanin index)",
        y = "standard deviation of derivatives") + ylim(0, 0.25) + xlim(2.75, 4.75)
 wrap_plots(plot_face_ref, plot_palm_ref, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between reflectance derivative sd and melanin index") & theme(legend.position = "bottom")
@@ -631,11 +695,11 @@ dev.off()
 ```{r plot-derivative-sd-mi-abs, fig.width=10, fig.height=6}
 # absorbance
 plot_face_abs = ggplot(data = sd_face) + geom_point(aes(log_mi, sd_abs), color = "pink", size = 0.8) + theme_classic() +
-  labs(title = "Forehead/Cheek Absorbance",
+  labs(title = paste0("Forehead/Cheek Absorbance (n=", nrow(sd_face), ")"),
        x = "log(Melanin index)",
        y = "standard deviation of derivatives") + ylim(0, 0.0055) + xlim(2.75, 4.75)
 plot_palm_abs = ggplot(data = sd_palm) + geom_point(aes(log_mi, sd_abs), color = "steelblue", size = 0.8) + theme_classic() +
-  labs(title = "Palm Absorbance",
+  labs(title = paste0("Palm Absorbance (n=", nrow(sd_palm), ")"),
        x = "log(Melanin index)",
        y = "standard deviation of derivatives") + ylim(0, 0.0055) + xlim(2.75, 4.75)
 
@@ -651,18 +715,31 @@ dev.off()
 ```{r ei-mi-correlation, fig.width=10, fig.height=6}
 # face
 plot_face_ei = ggplot(data = face_spectrum) + geom_point(aes(mi, ei), color = "pink", size = 0.8) + theme_classic() +
-  labs(title = "Forehead/Cheek",
-       x = "Melanin index",
+  labs(title = paste0("Forehead/Cheek (n=", nrow(face_spectrum), ")"),
+       x = "Forehead/Cheek Melanin index",
        y = "Erythema index") + xlim(0, 120) + ylim(10, 55)
 # palm
 plot_palm_ei = ggplot(data = palm_spectrum) + geom_point(aes(mi, ei), color = "steelblue", size = 0.8) + theme_classic() +
-  labs(title = "Palm",
-       x = "Melanin index",
+  labs(title = paste0("Palm (n=", nrow(palm_spectrum), ")"),
+       x = "Palm Melanin index",
        y = "Erythema index") + xlim(0, 120) + ylim(10, 55)
 wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
 
 pdf("output/ei_mi_correlation.pdf", width = 10, height = 6)
 wrap_plots(plot_face_ei, plot_palm_ei, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
+dev.off()
+```
+
+```{r palmei-facemi-correlation, fig.width=4, fig.height=4}
+palm_spectrum$face_mi = face_spectrum$mi[match(palm_spectrum$C, face_spectrum$C)]
+plot_palmei_facemi = ggplot(data = palm_spectrum) + geom_point(aes(face_mi, ei), color = "purple", size = 0.8) + theme_classic() +
+  labs(title = paste0("Palm EI vs Face MI (n=", nrow(palm_spectrum), ")"),
+       x = "Face Melanin index",
+       y = "Palm Erythema index") + xlim(0, 120) + ylim(10, 55)
+
+print(plot_palmei_facemi)
+pdf("output/palm_ei_face_mi_correlation.pdf", width = 4, height = 4)
+plot_palmei_facemi
 dev.off()
 ```
 
@@ -694,10 +771,14 @@ palm_ei_sd = sapply(palm_mi_seq, function(mi_val) {
   sd(window_data$ei)
 })
 palm_ei_sd_df = data.frame(mi = palm_mi_seq, ei_sd = palm_ei_sd)
+max_mi = palm_ei_sd_df$mi[which.max(palm_ei_sd_df$ei_sd)]
 plot_palm_ei_sd = ggplot(data = palm_ei_sd_df) + geom_line(aes(mi, ei_sd), color = "steelblue") + theme_classic() +
   labs(title = "Palm",
        x = "Melanin index",
-       y = "Erythema index standard deviation") + xlim(0, 120)
+       y = "Erythema index standard deviation") + xlim(0, 120) +
+  geom_vline(xintercept = max_mi, linetype = "dashed", color = "red") +
+  annotate("text", x = max_mi, y = 4, label = paste("MI =", round(max_mi, 1)), 
+           hjust = -0.1, vjust = -0.5, color = "red", size = 3.5)
 
 wrap_plots(plot_face_ei_sd, plot_palm_ei_sd, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index sd and melanin index") & theme(legend.position = "bottom")
 
@@ -706,30 +787,24 @@ wrap_plots(plot_face_ei_sd, plot_palm_ei_sd, nrow = 1, guides = "collect") + plo
 dev.off()
 ```
 
-## Correlation between erythema index variability and melanin index for combined face and palm data
-
-```{r ei-sd-facepalm, fig.width=10, fig.height=6}
-plot_facepalm_ei = ggplot(data = facepalm_spectrum) + geom_point(aes(mi, ei), color = "purple", size = 0.8) + theme_classic() +
-  labs(title = "Forehead/Cheek and Palm",
-       x = "Melanin index",
-       y = "Erythema index") + xlim(0, 120)
-window_size = 20 # melanin index units
-step_size = 1 # melanin index units
-# face and palm combined
-facepalm_mi_seq = seq(floor(quantile(facepalm_spectrum$mi, probs = 0.01)), ceiling(quantile(facepalm_spectrum$mi, probs = 0.99)), by = step_size)
-facepalm_ei_sd = sapply(facepalm_mi_seq, function(mi_val) {
-  window_data = facepalm_spectrum %>% filter(mi >= (mi_val - window_size/2) & mi < (mi_val + window_size/2))
+```{r palmei-facemi-sd, fig.width=4, fig.height=4}
+face_mi_seq = seq(floor(quantile(palm_spectrum$face_mi, probs = 0.01)), ceiling(quantile(palm_spectrum$face_mi, probs = 0.99)), by = step_size)
+palm_ei_sd = sapply(face_mi_seq, function(mi_val) {
+  window_data = palm_spectrum %>% filter(face_mi >= (mi_val - window_size/2) & face_mi < (mi_val + window_size/2))
   sd(window_data$ei)
 })
-facepalm_ei_sd_df = data.frame(mi = facepalm_mi_seq, ei_sd = facepalm_ei_sd)
-plot_facepalm_ei_sd = ggplot(data = facepalm_ei_sd_df) + geom_line(aes(mi, ei_sd), color = "purple") + theme_classic() +
-  labs(title = "Forehead/Cheek and Palm",
-       x = "Melanin index",
-       y = "Erythema index standard deviation") + xlim(0, 120)
+palm_ei_sd_df = data.frame(mi = face_mi_seq, ei_sd = palm_ei_sd)
+max_mi = palm_ei_sd_df$mi[which.max(palm_ei_sd_df$ei_sd)]
+plot_palm_ei_sd = ggplot(data = palm_ei_sd_df) + geom_line(aes(mi, ei_sd), color = "purple") + theme_classic() +
+  labs(title = "Palm EI vs Face MI",
+       x = "Face Melanin index",
+       y = "Palm Erythema index standard deviation") + xlim(0, 120) +
+  geom_vline(xintercept = max_mi, linetype = "dashed", color = "red") +
+  annotate("text", x = max_mi, y = 4, label = paste("MI =", round(max_mi, 1)), 
+           hjust = -0.1, vjust = -0.5, color = "red", size = 3.5)
 
-wrap_plots(plot_facepalm_ei, plot_facepalm_ei_sd, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
-
-pdf("output/facepalm_ei_mi_correlation.pdf", width = 10, height = 6)
-wrap_plots(plot_facepalm_ei, plot_facepalm_ei_sd, nrow = 1, guides = "collect") + plot_annotation(title = "Correlation between erythema index and melanin index") & theme(legend.position = "bottom")
+print(plot_palm_ei_sd)
+pdf("output/palm_ei_face_mi_sd_correlation.pdf", width = 4, height = 4)
+plot_palm_ei_sd
 dev.off()
 ```
