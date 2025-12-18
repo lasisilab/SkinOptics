@@ -9,13 +9,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Junhui He" />
+<meta name="author" content="Junhui He and Tina Lasisi" />
 
-<meta name="date" content="2025-12-17" />
+<meta name="date" content="2025-12-18" />
 
 <title>Skin Optics Analysis based on ISSA Data</title>
 
-<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -356,8 +356,8 @@ div.tocify {
 
 <h1 class="title toc-ignore">Skin Optics Analysis based on ISSA
 Data</h1>
-<h4 class="author">Junhui He</h4>
-<h4 class="date">2025-12-17</h4>
+<h4 class="author">Junhui He and Tina Lasisi</h4>
+<h4 class="date">2025-12-18</h4>
 
 </div>
 
@@ -365,7 +365,7 @@ Data</h1>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
 <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
-workflowr <span class="glyphicon glyphicon-ok text-success"
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
 aria-hidden="true"></span>
 </button>
 </p>
@@ -376,8 +376,8 @@ aria-hidden="true"></span>
 </li>
 <li>
 <a data-toggle="tab" href="#checks"> Checks <span
-class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
-</a>
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
 </li>
 <li>
 <a data-toggle="tab" href="#versions">Past versions</a>
@@ -386,13 +386,13 @@ class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2025-12-17
+<strong>Last updated:</strong> 2025-12-18
 </p>
 <p>
 <strong>Checks:</strong> <span
-class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 5
 <span class="glyphicon glyphicon-exclamation-sign text-danger"
-aria-hidden="true"></span> 0
+aria-hidden="true"></span> 2
 </p>
 <p>
 <strong>Knit directory:</strong> <code>SkinOptics/</code> <span
@@ -404,7 +404,7 @@ title="This is the local directory in which the code in this file was executed."
 This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
 analysis was created with <a
   href="https://github.com/workflowr/workflowr">workflowr</a> (version
-1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+1.7.1). The <em>Checks</em> tab describes the reproducibility checks
 that were applied when the results were created. The <em>Past
 versions</em> tab lists the development history.
 </p>
@@ -415,18 +415,21 @@ versions</em> tab lists the development history.
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
-<span class="glyphicon glyphicon-ok text-success"
-aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
-</a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
 </p>
 </div>
-<div id="strongRMarkdownfilestronguptodate"
+<div id="strongRMarkdownfilestronguncommittedchanges"
 class="panel-collapse collapse">
 <div class="panel-body">
-<p>Great! Since the R Markdown file has been committed to the Git
-repository, you know the exact version of the code that produced these
-results.</p>
+<p>The R Markdown file has unstaged changes. To know which version of
+the R Markdown file created these results, you’ll want to first commit
+it to the Git repo. If you’re still working on the analysis, you can
+ignore this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
 </div>
 </div>
 </div>
@@ -486,16 +489,27 @@ versions is critical for reproducibility.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
-<span class="glyphicon glyphicon-ok text-success"
-aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongdetected">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>Cache:</strong> detected </a>
 </p>
 </div>
-<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div id="strongCachestrongdetected" class="panel-collapse collapse">
 <div class="panel-body">
-<p>Nice! There were no cached chunks for this analysis, so you can be
-confident that you successfully produced the results during this
-run.</p>
+The following chunks had caches available:
+<ul>
+<li>
+derivatives-face
+</li>
+<li>
+derivatives-palm
+</li>
+</ul>
+<p>To ensure reproducibility of the results, delete the cache directory
+<code>JID_SkinOptics_cache</code> and re-run the analysis. To have
+workflowr automatically delete the cache directory prior to building the
+file, set <code>delete_cache = TRUE</code> when running
+<code>wflow_build()</code> or <code>wflow_publish()</code>.</p>
 </div>
 </div>
 </div>
@@ -517,15 +531,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreea6f7dc4ef8e85ca9313219dc9c0a235a0c7c830atargetblanka6f7dc4a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree1ff1191cc3440d16829b0ca9571d0023cda46ff3targetblank1ff1191a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/lasisilab/SkinOptics/tree/a6f7dc4ef8e85ca9313219dc9c0a235a0c7c830a" target="_blank">a6f7dc4</a>
+<a href="https://github.com/lasisilab/SkinOptics/tree/1ff1191cc3440d16829b0ca9571d0023cda46ff3" target="_blank">1ff1191</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreea6f7dc4ef8e85ca9313219dc9c0a235a0c7c830atargetblanka6f7dc4a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree1ff1191cc3440d16829b0ca9571d0023cda46ff3targetblank1ff1191a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -535,7 +549,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/lasisilab/SkinOptics/tree/a6f7dc4ef8e85ca9313219dc9c0a235a0c7c830a" target="_blank">a6f7dc4</a>.
+<a href="https://github.com/lasisilab/SkinOptics/tree/1ff1191cc3440d16829b0ca9571d0023cda46ff3" target="_blank">1ff1191</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -550,18 +564,17 @@ were generated:
 </p>
 <pre><code>
 Ignored files:
-    Ignored:    .RData
-    Ignored:    .Rhistory
-    Ignored:    .Rproj.user/
+    Ignored:    .DS_Store
+    Ignored:    analysis/skin-map_cache/
+    Ignored:    data/worldclim/
 
 Untracked files:
-    Untracked:  output/palm_ei_face_mi_correlation.pdf
-    Untracked:  output/palm_ei_face_mi_sd_correlation.pdf
-    Untracked:  output/reflectance_face.pdf
-    Untracked:  output/reflectance_palm.pdf
-    Untracked:  output/reflectance_palm_face.pdf
+    Untracked:  analysis/JID_SkinOptics_cache/
+    Untracked:  code/install_packages.R
+    Untracked:  data/ISSA_17_Jan_2025_Yan_Lu.xlsx
 
 Unstaged changes:
+    Modified:   analysis/JID_SkinOptics.Rmd
     Modified:   output/absorbance_derivative_face.pdf
     Modified:   output/absorbance_derivative_palm.pdf
     Modified:   output/absorbance_derivative_palm_face.pdf
@@ -570,11 +583,16 @@ Unstaged changes:
     Modified:   output/ei_sd_mi_correlation.pdf
     Modified:   output/heatmap.pdf
     Modified:   output/mi_distribution.pdf
+    Modified:   output/palm_ei_face_mi_correlation.pdf
+    Modified:   output/palm_ei_face_mi_sd_correlation.pdf
     Modified:   output/reflectance_derivative_face.pdf
     Modified:   output/reflectance_derivative_palm.pdf
     Modified:   output/reflectance_derivative_palm_face.pdf
+    Modified:   output/reflectance_face.pdf
     Modified:   output/reflectance_mi_sd.pdf
     Modified:   output/reflectance_mi_sd_regression.pdf
+    Modified:   output/reflectance_palm.pdf
+    Modified:   output/reflectance_palm_face.pdf
 
 </code></pre>
 <p>
@@ -619,6 +637,23 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/lasisilab/SkinOptics/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/JID_SkinOptics.html" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+<td>
+Build site.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -816,19 +851,35 @@ create SkinOptics
 <div id="clarifications" class="section level1">
 <h1>Clarifications</h1>
 <ul>
-<li><p>Melanin index (MI) is calculated based on skin reflectance at 680
-nm. Specifically, MI = -100 * log10(R680 / 100), where R680 is the
-reflectance percentage at 680 nm.</p></li>
-<li><p>Erythema index (EI) is calculated as EI = 100 * log10(R680 /
-((R550 + R560)/2)), where R550 and R560 are the reflectance percentages
-at 550 nm and 560 nm, respectively.</p></li>
+<li><p>Melanin index (MI) is calculated from skin reflectance at 680 nm,
+where <span class="math inline">\(R_{680}\)</span> is the measured
+reflectance percentage (0-100):</p>
+<ul>
+<li><span class="math display">\[MI = -100 \times \log_{10}(R_{680} /
+100)\]</span></li>
+<li>This is equivalent to the standard formula <span
+class="math inline">\(MI = 100 \times \log_{10}(1/R)\)</span>, where
+<span class="math inline">\(R\)</span> is reflectance as a decimal
+(0-1)</li>
+<li>Internally, this is computed by first calculating absorbance (<span
+class="math inline">\(A_{680} = -\log_{10}(R_{680} / 100)\)</span>),
+then multiplying by 100</li>
+</ul></li>
+<li><p>Erythema index (EI) is calculated as: <span
+class="math display">\[EI = 100 \times
+\log_{10}\left(\frac{R_{680}}{(R_{550} + R_{560})/2}\right)\]</span>
+where <span class="math inline">\(R_{550}\)</span>, <span
+class="math inline">\(R_{560}\)</span>, and <span
+class="math inline">\(R_{680}\)</span> are the reflectance percentages
+at 550 nm, 560 nm, and 680 nm, respectively.</p></li>
 <li><p>EI variability is measured by the standard deviation of EIs
 within a sliding window of MI values. The window size is set to 20 MI
 units, and the step size is 1 MI unit.</p>
 <ul>
 <li>For each center MI value in the sequence, all EI values
-corresponding to MI values within the window (center MI ± 10) are
-collected, and their standard deviation is computed.</li>
+corresponding to MI values within the window (center MI <span
+class="math inline">\(\pm\)</span> 10) are collected, and their standard
+deviation is computed.</li>
 <li>The center MI values range from the 1st to the 99th percentile of
 observed MI values.</li>
 </ul></li>
@@ -849,11 +900,14 @@ scaled by a factor of 0.7.</p></li>
 <li><p>Eumelanin classes are defined based on melanin index ranges as
 follows:</p>
 <ul>
-<li>Low: MI &lt; 25</li>
-<li>Intermediate low: 25 ≤ MI &lt; 50</li>
-<li>Intermediate: 50 ≤ MI &lt; 75</li>
-<li>Intermediate high: 75 ≤ MI &lt; 100</li>
-<li>High: MI ≥ 100</li>
+<li>Low: <span class="math inline">\(MI &lt; 25\)</span></li>
+<li>Intermediate low: <span class="math inline">\(25 \leq MI &lt;
+50\)</span></li>
+<li>Intermediate: <span class="math inline">\(50 \leq MI &lt;
+75\)</span></li>
+<li>Intermediate high: <span class="math inline">\(75 \leq MI &lt;
+100\)</span></li>
+<li>High: <span class="math inline">\(MI \geq 100\)</span></li>
 </ul></li>
 <li><p>The pdf files generated in this analysis are saved in the
 “output” directory.</p></li>
@@ -861,9 +915,20 @@ follows:</p>
 </div>
 <div id="visualizations" class="section level1">
 <h1>Visualizations</h1>
+<pre><code>Face readings before deduplication: 4603 </code></pre>
+<pre><code>Unique individuals with Face readings: 2102 </code></pre>
+<pre><code>Face readings after deduplication: 2102 </code></pre>
+<pre><code>Palm readings before deduplication: 776 </code></pre>
+<pre><code>Unique individuals with Palm readings: 776 </code></pre>
+<pre><code>Palm readings after deduplication: 776 </code></pre>
 <div id="distribution-of-melanin-index-by-site" class="section level2">
 <h2>Distribution of melanin index by site</h2>
-<p><img src="figure/JID_SkinOptics.Rmd/sample%20distribution-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<pre><code>
+Final data summary:</code></pre>
+<pre><code>Face: n = 2101 | Unique individuals: 2101 </code></pre>
+<pre><code>Palm: n = 776 | Unique individuals: 776 </code></pre>
+<pre><code>Combined: n = 2877 </code></pre>
+<p><img src="figure/JID_SkinOptics.Rmd/sample%20distribution-1.png" width="50%" style="display: block; margin: auto;" /></p>
 <p>
 <button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-no-spaces-sample-distribution-1">
 Past versions of "sample distribution-1.png"
@@ -912,8 +977,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 <div
 id="unique-subjects-per-site-across-representative-face-melanin-index-bins-heatmap"
@@ -958,8 +1021,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 <table>
 <caption>Number of subjects in each eumelanin class
 (Forehead/Cheek)</caption>
@@ -1026,22 +1087,128 @@ Junhui He
 class="section level3">
 <h3>Face reflectance by face eumelanin class</h3>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-raw-reflectance-by-class-face-1">
+Past versions of plot-raw-reflectance-by-class-face-1.png
+</button>
+</p>
+<div id="fig-plot-raw-reflectance-by-class-face-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-face-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="palm-reflectance-by-palm-eumelanin-class"
 class="section level3">
 <h3>Palm reflectance by palm eumelanin class</h3>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-palm-1.png" width="100%" style="display: block; margin: auto;" /></p>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-raw-reflectance-by-class-palm-1">
+Past versions of plot-raw-reflectance-by-class-palm-1.png
+</button>
+</p>
+<div id="fig-plot-raw-reflectance-by-class-palm-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-palm-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="palm-reflectance-by-face-eumelanin-class"
 class="section level3">
 <h3>Palm reflectance by face eumelanin class</h3>
 <p><img src="figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-palm-face-1.png" width="100%" style="display: block; margin: auto;" /></p>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-raw-reflectance-by-class-palm-face-1">
+Past versions of plot-raw-reflectance-by-class-palm-face-1.png
+</button>
+</p>
+<div id="fig-plot-raw-reflectance-by-class-palm-face-1"
+class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-palm-face-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 </div>
 <div id="first-derivatives-of-reflectance-by-eumelanin-classes"
@@ -1099,8 +1266,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 <div id="palm-reflectance-derivatives-by-palm-eumelanin-class"
 class="section level3">
@@ -1154,8 +1319,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 <div id="palm-reflectance-derivatives-by-face-eumelanin-class"
 class="section level3">
@@ -1198,9 +1361,14 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
+</div>
+<div
+id="composite-figure-face-reflectance-and-derivatives-by-eumelanin-class"
+class="section level2">
+<h2>Composite figure: Face reflectance and derivatives by eumelanin
+class</h2>
+<p><img src="figure/JID_SkinOptics.Rmd/composite-reflectance-derivatives-1.png" width="100%" style="display: block; margin: auto;" /></p>
 </div>
 <div id="first-derivatives-of-absorbance-by-eumelanin-classes"
 class="section level2">
@@ -1257,8 +1425,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 <div id="palm-absorbance-derivatives-by-palm-eumelanin-class"
 class="section level3">
@@ -1312,8 +1478,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 <div id="palm-absorbance-derivatives-by-face-eumelanin-class"
 class="section level3">
@@ -1356,8 +1520,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 </div>
 <div
@@ -1389,6 +1551,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-ref-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/b2cbe443818548e76a5cc4401ed80a8d9a321882/docs/figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-ref-1.png" target="_blank">b2cbe44</a>
 </td>
 <td>
@@ -1413,8 +1586,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 <ul>
 <li>Regression analysis</li>
 </ul>
@@ -1424,19 +1595,19 @@ lm(formula = sd_ref ~ log_mi + I(log_mi^2), data = sd_face)
 
 Residuals:
       Min        1Q    Median        3Q       Max 
--0.069041 -0.014131 -0.001693  0.011082  0.100521 
+-0.069033 -0.014140 -0.001695  0.011080  0.100513 
 
 Coefficients:
              Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)  1.560287   0.066388   23.50   &lt;2e-16 ***
-log_mi      -0.682188   0.035856  -19.03   &lt;2e-16 ***
-I(log_mi^2)  0.076287   0.004825   15.81   &lt;2e-16 ***
+(Intercept)  1.558619   0.066400   23.47   &lt;2e-16 ***
+log_mi      -0.681307   0.035862  -19.00   &lt;2e-16 ***
+I(log_mi^2)  0.076171   0.004826   15.78   &lt;2e-16 ***
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 
-Residual standard error: 0.02265 on 2098 degrees of freedom
-Multiple R-squared:  0.6498,    Adjusted R-squared:  0.6495 
-F-statistic:  1947 on 2 and 2098 DF,  p-value: &lt; 2.2e-16</code></pre>
+Residual standard error: 0.02264 on 2098 degrees of freedom
+Multiple R-squared:  0.6497,    Adjusted R-squared:  0.6494 
+F-statistic:  1946 on 2 and 2098 DF,  p-value: &lt; 2.2e-16</code></pre>
 <pre><code>
 Call:
 lm(formula = sd_ref ~ log_mi, data = sd_palm)
@@ -1480,6 +1651,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/regression-drv-mi-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/b2cbe443818548e76a5cc4401ed80a8d9a321882/docs/figure/JID_SkinOptics.Rmd/regression-drv-mi-1.png" target="_blank">b2cbe44</a>
 </td>
 <td>
@@ -1504,8 +1686,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 <div id="correlation-between-absorbance-derivative-sd-and-melanin-index"
 class="section level2">
@@ -1535,6 +1715,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-abs-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/b2cbe443818548e76a5cc4401ed80a8d9a321882/docs/figure/JID_SkinOptics.Rmd/plot-derivative-sd-mi-abs-1.png" target="_blank">b2cbe44</a>
 </td>
 <td>
@@ -1559,8 +1750,6 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
 </div>
 <div id="correlation-between-erythema-index-and-melanin-index-by-site"
 class="section level2">
@@ -1590,6 +1779,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/ei-mi-correlation-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/b2cbe443818548e76a5cc4401ed80a8d9a321882/docs/figure/JID_SkinOptics.Rmd/ei-mi-correlation-1.png" target="_blank">b2cbe44</a>
 </td>
 <td>
@@ -1614,11 +1814,44 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
-<p><img src="figure/JID_SkinOptics.Rmd/palmei-facemi-correlation-1.png" width="100%" style="display: block; margin: auto;" /></p>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
+<p><img src="figure/JID_SkinOptics.Rmd/palmei-facemi-correlation-1.png" width="50%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-palmei-facemi-correlation-1">
+Past versions of palmei-facemi-correlation-1.png
+</button>
+</p>
+<div id="fig-palmei-facemi-correlation-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/palmei-facemi-correlation-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div
 id="correlation-between-erythema-index-variability-and-melanin-index-by-site"
@@ -1662,6 +1895,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/ei-sd-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/b2cbe443818548e76a5cc4401ed80a8d9a321882/docs/figure/JID_SkinOptics.Rmd/ei-sd-1.png" target="_blank">b2cbe44</a>
 </td>
 <td>
@@ -1686,11 +1930,44 @@ Junhui He
 </table>
 </div>
 </div>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
-<p><img src="figure/JID_SkinOptics.Rmd/palmei-facemi-sd-1.png" width="100%" style="display: block; margin: auto;" /></p>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
+<p><img src="figure/JID_SkinOptics.Rmd/palmei-facemi-sd-1.png" width="50%" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-palmei-facemi-sd-1">
+Past versions of palmei-facemi-sd-1.png
+</button>
+</p>
+<div id="fig-palmei-facemi-sd-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/9956d2d63adff24f10c2bdaf45061f76a3f112a8/docs/figure/JID_SkinOptics.Rmd/palmei-facemi-sd-1.png" target="_blank">9956d2d</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-17
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -1699,13 +1976,13 @@ Session information
 </button>
 </p>
 <div id="workflowr-sessioninfo" class="collapse">
-<pre><code>R version 4.3.1 (2023-06-16)
-Platform: aarch64-apple-darwin20 (64-bit)
-Running under: macOS 15.6.1
+<pre><code>R version 4.5.2 (2025-10-31)
+Platform: aarch64-apple-darwin20
+Running under: macOS Tahoe 26.1
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
-LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
 [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1717,26 +1994,29 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] KernSmooth_2.23-26 openxlsx_4.2.8.1   scales_1.4.0       lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
- [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
-[13] tidyverse_2.0.0    patchwork_1.3.2    knitr_1.50        
+ [1] ggpubr_0.6.0       here_1.0.1         KernSmooth_2.23-26 openxlsx_4.2.8.1  
+ [5] scales_1.4.0       lubridate_1.9.4    forcats_1.0.0      stringr_1.5.1     
+ [9] dplyr_1.1.4        purrr_1.0.4        readr_2.1.5        tidyr_1.3.1       
+[13] tibble_3.2.1       ggplot2_4.0.1      tidyverse_2.0.0    knitr_1.50        
 
 loaded via a namespace (and not attached):
- [1] sass_0.4.10        generics_0.1.4     lattice_0.22-7     stringi_1.8.7     
- [5] hms_1.1.4          digest_0.6.39      magrittr_2.0.4     timechange_0.3.0  
- [9] evaluate_1.0.5     grid_4.3.1         RColorBrewer_1.1-3 fastmap_1.2.0     
-[13] Matrix_1.5-4.1     rprojroot_2.1.1    workflowr_1.7.2    jsonlite_2.0.0    
-[17] zip_2.3.3          whisker_0.4.1      promises_1.5.0     mgcv_1.8-42       
-[21] viridisLite_0.4.2  jquerylib_0.1.4    cli_3.6.5          rlang_1.1.6       
-[25] splines_4.3.1      withr_3.0.2        cachem_1.1.0       yaml_2.3.11       
-[29] otel_0.2.0         tools_4.3.1        tzdb_0.5.0         httpuv_1.6.16     
-[33] vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4    git2r_0.36.2      
-[37] fs_1.6.6           pkgconfig_2.0.3    pillar_1.11.1      bslib_0.9.0       
-[41] later_1.4.4        gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0        
-[45] xfun_0.54          tidyselect_1.2.1   farver_2.1.2       nlme_3.1-168      
-[49] htmltools_0.5.9    labeling_0.4.3     rmarkdown_2.30     compiler_4.3.1    
-[53] S7_0.2.1          </code></pre>
+ [1] gtable_0.3.6       xfun_0.54          bslib_0.9.0        rstatix_0.7.2     
+ [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.2       
+ [9] generics_0.1.4     pkgconfig_2.0.3    Matrix_1.7-4       RColorBrewer_1.1-3
+[13] S7_0.2.0           lifecycle_1.0.4    compiler_4.5.2     farver_2.1.2      
+[17] git2r_0.36.2       textshaping_1.0.1  carData_3.0-5      httpuv_1.6.16     
+[21] htmltools_0.5.8.1  sass_0.4.10        yaml_2.3.10        Formula_1.2-5     
+[25] later_1.4.2        pillar_1.10.2      car_3.1-3          jquerylib_0.1.4   
+[29] whisker_0.4.1      cachem_1.1.0       abind_1.4-8        nlme_3.1-168      
+[33] tidyselect_1.2.1   zip_2.3.3          digest_0.6.37      stringi_1.8.7     
+[37] splines_4.5.2      labeling_0.4.3     cowplot_1.1.3      rprojroot_2.0.4   
+[41] fastmap_1.2.0      grid_4.5.2         cli_3.6.5          magrittr_2.0.3    
+[45] dichromat_2.0-0.1  broom_1.0.8        withr_3.0.2        promises_1.3.3    
+[49] backports_1.5.0    timechange_0.3.0   rmarkdown_2.29     ggsignif_0.6.4    
+[53] workflowr_1.7.1    ragg_1.4.0         hms_1.1.3          evaluate_1.0.3    
+[57] viridisLite_0.4.2  mgcv_1.9-3         rlang_1.1.6        Rcpp_1.1.0        
+[61] glue_1.8.0         jsonlite_2.0.0     R6_2.6.1           systemfonts_1.3.1 
+[65] fs_1.6.6          </code></pre>
 </div>
 </div>
 </div>

@@ -1,0 +1,2 @@
+derivatives-face	drv_facea	drv_facea_df	drv_facer	drv_facer_df	face_absorbance	face_reflectance
+derivatives-palm	drv_palma	drv_palma_df	drv_palmr	drv_palmr_df	palm_absorbance	palm_reflectance	plot_drv_palma	plot_drv_palmr
