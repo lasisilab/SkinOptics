@@ -797,7 +797,18 @@ save_pdf(p, "reflectance_mi_sd_regression.pdf", width = 10, height = 5)
 
 ### Log-transformed: Derivative SD vs melanin index (reflectance)
 
+A log-log regression tests for a power-law relationship between derivative variability and melanin content. The slope in log-log space represents the exponent of this power-law relationship.
+
 ```{r plot-derivative-sd-mi-ref-log, fig.width=10, fig.height=5}
+# Helper function to format p-values (handles very small values)
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
 # Run log-log regressions
 reg_face_log <- lm(log(sd_ref) ~ log(mi), data = sd_face)
 reg_palm_log <- lm(log(sd_ref) ~ log(mi), data = sd_palm)
@@ -818,15 +829,15 @@ print(summary(reg_face_log))
 cat("\n\nPALM:\n")
 print(summary(reg_palm_log))
 
-# Create annotation data
+# Create annotation data with actual coordinates
 annotation_df <- data.frame(
   site = c("Forehead/Cheek", "Palm"),
   label = c(
-    sprintf("slope = %.2f\nR² = %.3f\np %s", face_slope, face_r2, 
-            ifelse(face_p < 0.001, "< 0.001", sprintf("= %.3f", face_p))),
-    sprintf("slope = %.2f\nR² = %.3f\np %s", palm_slope, palm_r2,
-            ifelse(palm_p < 0.001, "< 0.001", sprintf("= %.3f", palm_p)))
-  )
+    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
+    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
+  ),
+  x = 90,
+  y = max(sd_combined$sd_ref) * 0.9
 )
 
 p <- ggplot(data = sd_combined, aes(x = mi, y = sd_ref, color = site)) + 
@@ -836,12 +847,12 @@ p <- ggplot(data = sd_combined, aes(x = mi, y = sd_ref, color = site)) +
   scale_y_log10() +
   scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
   facet_wrap(~site, nrow = 1, labeller = as_labeller(sd_site_labels)) +
-  geom_text(data = annotation_df, aes(x = 25, y = Inf, label = label),
-            hjust = 0, vjust = 1.2, size = 3, color = "black", inherit.aes = FALSE) +
+  geom_text(data = annotation_df, aes(x = x, y = y, label = label),
+            hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
   labs(title = "Derivative SD vs melanin index (log-log, reflectance)",
-       x = "Melanin index",
-       y = "Standard deviation of derivatives") + 
+       x = "log(Melanin Index)",
+       y = "log(Standard deviation of derivatives)") + 
   theme(legend.position = "none")
 
 print(p)
@@ -1045,6 +1056,8 @@ save_pdf(p, "peak_valley_wavelength_vs_mi.pdf", width = 12, height = 10)
 
 ### Log-transformed: Peak/valley wavelength vs melanin index
 
+Log-transforming both axes tests whether peak and valley wavelength positions follow a power-law relationship with melanin content. Since wavelengths vary little, we expect minimal relationships.
+
 ```{r peak-valley-wavelength-vs-mi-log, fig.width=12, fig.height=10}
 # Plot peak wavelength vs MI (log-log)
 p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_wavelength, color = site)) +
@@ -1056,7 +1069,7 @@ p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_wavelength, color = site
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
   theme_classic() +
   labs(title = "Peak wavelength vs melanin index (log-log)",
-       x = "log(Melanin index)",
+       x = "log(Melanin Index)",
        y = "log(Peak wavelength (nm))") +
   theme(legend.position = "none")
 
@@ -1070,7 +1083,7 @@ p2 <- ggplot(peak_valley_combined, aes(x = mi, y = valley_wavelength, color = si
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
   theme_classic() +
   labs(title = "Valley wavelength vs melanin index (log-log)",
-       x = "log(Melanin index)",
+       x = "log(Melanin Index)",
        y = "log(Valley wavelength (nm))") +
   theme(legend.position = "none")
 
@@ -1115,6 +1128,8 @@ save_pdf(p, "peak_valley_value_vs_mi.pdf", width = 12, height = 10)
 
 ### Log-transformed: Peak/valley value vs melanin index
 
+Log-log regression tests whether the amplitude of derivative peak and valley values follow a power-law relationship with melanin content. Note that valley values are negative, so we use absolute values for the log transformation.
+
 ```{r peak-valley-value-vs-mi-log, fig.width=12, fig.height=10}
 # Plot peak value vs MI (log-log)
 p1 <- ggplot(peak_valley_combined %>% filter(peak_value > 0), 
@@ -1127,7 +1142,7 @@ p1 <- ggplot(peak_valley_combined %>% filter(peak_value > 0),
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
   theme_classic() +
   labs(title = "Peak value vs melanin index (log-log)",
-       x = "log(Melanin index)",
+       x = "log(Melanin Index)",
        y = "log(Peak derivative value)") +
   theme(legend.position = "none")
 
@@ -1143,7 +1158,7 @@ p2 <- ggplot(peak_valley_combined %>% filter(valley_value < 0),
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
   theme_classic() +
   labs(title = "Valley value vs melanin index (log-log)",
-       x = "log(Melanin index)",
+       x = "log(Melanin Index)",
        y = "log(|Valley derivative value|)") +
   theme(legend.position = "none")
 
@@ -1209,7 +1224,18 @@ save_pdf(p, "peak_valley_delta_vs_mi.pdf", width = 12, height = 5)
 
 ### Log-transformed: Delta vs melanin index
 
+The delta (peak minus valley) represents the amplitude of the hemoglobin absorption feature in the first derivative. Log-log regression tests whether this amplitude follows a power-law relationship with melanin content.
+
 ```{r peak-valley-delta-vs-mi-log, fig.width=12, fig.height=5}
+# Helper function to format p-values (handles very small values)
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
 # Run log-log regressions for delta
 delta_face <- face_peak_valley %>% filter(delta > 0)
 delta_palm <- palm_peak_valley %>% filter(delta > 0)
@@ -1233,19 +1259,20 @@ print(summary(reg_face_delta_log))
 cat("\n\nPALM:\n")
 print(summary(reg_palm_delta_log))
 
-# Create annotation data
+# Create annotation data with actual coordinates
+pv_delta_filtered <- peak_valley_combined %>% filter(delta > 0)
 annotation_delta <- data.frame(
   site = c("Forehead/Cheek", "Palm"),
   label = c(
-    sprintf("slope = %.2f\nR² = %.3f\np %s", face_slope, face_r2, 
-            ifelse(face_p < 0.001, "< 0.001", sprintf("= %.3f", face_p))),
-    sprintf("slope = %.2f\nR² = %.3f\np %s", palm_slope, palm_r2,
-            ifelse(palm_p < 0.001, "< 0.001", sprintf("= %.3f", palm_p)))
-  )
+    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
+    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
+  ),
+  x = 90,
+  y = max(pv_delta_filtered$delta) * 0.9
 )
 
 # Plot delta vs MI (log-log)
-p <- ggplot(peak_valley_combined %>% filter(delta > 0), 
+p <- ggplot(pv_delta_filtered, 
             aes(x = mi, y = delta, color = site)) +
   geom_point(size = 0.8, alpha = 0.7) +
   geom_smooth(method = "lm", se = TRUE) +
@@ -1253,12 +1280,12 @@ p <- ggplot(peak_valley_combined %>% filter(delta > 0),
   scale_y_log10() +
   scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  geom_text(data = annotation_delta, aes(x = 20, y = Inf, label = label),
-            hjust = 0, vjust = 1.2, size = 3, color = "black", inherit.aes = FALSE) +
+  geom_text(data = annotation_delta, aes(x = x, y = y, label = label),
+            hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
   labs(title = "Delta (peak - valley) vs melanin index (log-log)",
-       x = "Melanin index",
-       y = "Delta (peak - valley)") +
+       x = "log(Melanin Index)",
+       y = "log(Delta (peak - valley))") +
   theme(legend.position = "none")
 
 print(p)
@@ -1285,7 +1312,18 @@ save_pdf(p, "absorbance_mi_sd.pdf", width = 10, height = 5)
 
 ### Log-transformed: Derivative SD vs melanin index (absorbance)
 
+This log-log regression tests for a power-law relationship between absorbance derivative variability and melanin content.
+
 ```{r plot-derivative-sd-mi-abs-log, fig.width=10, fig.height=5}
+# Helper function to format p-values (handles very small values)
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
 # Run log-log regressions for absorbance SD
 reg_face_abs_log <- lm(log(sd_abs) ~ log(mi), data = sd_face)
 reg_palm_abs_log <- lm(log(sd_abs) ~ log(mi), data = sd_palm)
@@ -1306,15 +1344,15 @@ print(summary(reg_face_abs_log))
 cat("\n\nPALM:\n")
 print(summary(reg_palm_abs_log))
 
-# Create annotation data
+# Create annotation data with actual coordinates
 annotation_abs <- data.frame(
   site = c("Forehead/Cheek", "Palm"),
   label = c(
-    sprintf("slope = %.2f\nR² = %.3f\np %s", face_slope, face_r2, 
-            ifelse(face_p < 0.001, "< 0.001", sprintf("= %.3f", face_p))),
-    sprintf("slope = %.2f\nR² = %.3f\np %s", palm_slope, palm_r2,
-            ifelse(palm_p < 0.001, "< 0.001", sprintf("= %.3f", palm_p)))
-  )
+    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
+    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
+  ),
+  x = 90,
+  y = max(sd_combined$sd_abs) * 0.9
 )
 
 p <- ggplot(data = sd_combined, aes(x = mi, y = sd_abs, color = site)) + 
@@ -1324,12 +1362,12 @@ p <- ggplot(data = sd_combined, aes(x = mi, y = sd_abs, color = site)) +
   scale_y_log10() +
   scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
   facet_wrap(~site, nrow = 1, labeller = as_labeller(sd_site_labels)) +
-  geom_text(data = annotation_abs, aes(x = 25, y = Inf, label = label),
-            hjust = 0, vjust = 1.2, size = 3, color = "black", inherit.aes = FALSE) +
+  geom_text(data = annotation_abs, aes(x = x, y = y, label = label),
+            hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
   labs(title = "Derivative SD vs melanin index (log-log, absorbance)",
-       x = "Melanin index",
-       y = "Standard deviation of derivatives") + 
+       x = "log(Melanin Index)",
+       y = "log(Standard deviation of derivatives)") + 
   theme(legend.position = "none")
 
 print(p)
