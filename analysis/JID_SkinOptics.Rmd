@@ -795,6 +795,59 @@ print(p)
 save_pdf(p, "reflectance_mi_sd_regression.pdf", width = 10, height = 5)
 ```
 
+### Log-transformed: Derivative SD vs melanin index (reflectance)
+
+```{r plot-derivative-sd-mi-ref-log, fig.width=10, fig.height=5}
+# Run log-log regressions
+reg_face_log <- lm(log(sd_ref) ~ log(mi), data = sd_face)
+reg_palm_log <- lm(log(sd_ref) ~ log(mi), data = sd_palm)
+
+# Extract regression stats for annotation
+face_r2 <- summary(reg_face_log)$r.squared
+face_slope <- coef(reg_face_log)[2]
+face_p <- summary(reg_face_log)$coefficients[2, 4]
+
+palm_r2 <- summary(reg_palm_log)$r.squared
+palm_slope <- coef(reg_palm_log)[2]
+palm_p <- summary(reg_palm_log)$coefficients[2, 4]
+
+# Print regression summaries
+cat("=== Log-log regression: log(sd_ref) ~ log(mi) ===\n\n")
+cat("FACE:\n")
+print(summary(reg_face_log))
+cat("\n\nPALM:\n")
+print(summary(reg_palm_log))
+
+# Create annotation data
+annotation_df <- data.frame(
+  site = c("Forehead/Cheek", "Palm"),
+  label = c(
+    sprintf("slope = %.2f\nR² = %.3f\np %s", face_slope, face_r2, 
+            ifelse(face_p < 0.001, "< 0.001", sprintf("= %.3f", face_p))),
+    sprintf("slope = %.2f\nR² = %.3f\np %s", palm_slope, palm_r2,
+            ifelse(palm_p < 0.001, "< 0.001", sprintf("= %.3f", palm_p)))
+  )
+)
+
+p <- ggplot(data = sd_combined, aes(x = mi, y = sd_ref, color = site)) + 
+  geom_point(size = 0.8, alpha = 0.7) + 
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(sd_site_labels)) +
+  geom_text(data = annotation_df, aes(x = 25, y = Inf, label = label),
+            hjust = 0, vjust = 1.2, size = 3, color = "black", inherit.aes = FALSE) +
+  theme_classic() +
+  labs(title = "Derivative SD vs melanin index (log-log, reflectance)",
+       x = "Melanin index",
+       y = "Standard deviation of derivatives") + 
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "reflectance_mi_sd_log.pdf", width = 10, height = 5)
+```
+
 ## Derivative peak and valley analysis (500-650 nm)
 
 For each individual spectrum, we identify the peak (maximum) and valley (minimum) of the first derivative within the 500-650 nm wavelength range. This range captures the hemoglobin absorption features.
@@ -1157,6 +1210,40 @@ save_pdf(p, "peak_valley_delta_vs_mi.pdf", width = 12, height = 5)
 ### Log-transformed: Delta vs melanin index
 
 ```{r peak-valley-delta-vs-mi-log, fig.width=12, fig.height=5}
+# Run log-log regressions for delta
+delta_face <- face_peak_valley %>% filter(delta > 0)
+delta_palm <- palm_peak_valley %>% filter(delta > 0)
+
+reg_face_delta_log <- lm(log(delta) ~ log(mi), data = delta_face)
+reg_palm_delta_log <- lm(log(delta) ~ log(mi), data = delta_palm)
+
+# Extract regression stats for annotation
+face_r2 <- summary(reg_face_delta_log)$r.squared
+face_slope <- coef(reg_face_delta_log)[2]
+face_p <- summary(reg_face_delta_log)$coefficients[2, 4]
+
+palm_r2 <- summary(reg_palm_delta_log)$r.squared
+palm_slope <- coef(reg_palm_delta_log)[2]
+palm_p <- summary(reg_palm_delta_log)$coefficients[2, 4]
+
+# Print regression summaries
+cat("=== Log-log regression: log(delta) ~ log(mi) ===\n\n")
+cat("FACE:\n")
+print(summary(reg_face_delta_log))
+cat("\n\nPALM:\n")
+print(summary(reg_palm_delta_log))
+
+# Create annotation data
+annotation_delta <- data.frame(
+  site = c("Forehead/Cheek", "Palm"),
+  label = c(
+    sprintf("slope = %.2f\nR² = %.3f\np %s", face_slope, face_r2, 
+            ifelse(face_p < 0.001, "< 0.001", sprintf("= %.3f", face_p))),
+    sprintf("slope = %.2f\nR² = %.3f\np %s", palm_slope, palm_r2,
+            ifelse(palm_p < 0.001, "< 0.001", sprintf("= %.3f", palm_p)))
+  )
+)
+
 # Plot delta vs MI (log-log)
 p <- ggplot(peak_valley_combined %>% filter(delta > 0), 
             aes(x = mi, y = delta, color = site)) +
@@ -1166,10 +1253,12 @@ p <- ggplot(peak_valley_combined %>% filter(delta > 0),
   scale_y_log10() +
   scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  geom_text(data = annotation_delta, aes(x = 20, y = Inf, label = label),
+            hjust = 0, vjust = 1.2, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
   labs(title = "Delta (peak - valley) vs melanin index (log-log)",
-       x = "log(Melanin index)",
-       y = "log(Delta (peak - valley))") +
+       x = "Melanin index",
+       y = "Delta (peak - valley)") +
   theme(legend.position = "none")
 
 print(p)
@@ -1192,6 +1281,59 @@ p <- ggplot(data = sd_combined, aes(x = log_mi, y = sd_abs, color = site)) +
 
 print(p)
 save_pdf(p, "absorbance_mi_sd.pdf", width = 10, height = 5)
+```
+
+### Log-transformed: Derivative SD vs melanin index (absorbance)
+
+```{r plot-derivative-sd-mi-abs-log, fig.width=10, fig.height=5}
+# Run log-log regressions for absorbance SD
+reg_face_abs_log <- lm(log(sd_abs) ~ log(mi), data = sd_face)
+reg_palm_abs_log <- lm(log(sd_abs) ~ log(mi), data = sd_palm)
+
+# Extract regression stats for annotation
+face_r2 <- summary(reg_face_abs_log)$r.squared
+face_slope <- coef(reg_face_abs_log)[2]
+face_p <- summary(reg_face_abs_log)$coefficients[2, 4]
+
+palm_r2 <- summary(reg_palm_abs_log)$r.squared
+palm_slope <- coef(reg_palm_abs_log)[2]
+palm_p <- summary(reg_palm_abs_log)$coefficients[2, 4]
+
+# Print regression summaries
+cat("=== Log-log regression: log(sd_abs) ~ log(mi) ===\n\n")
+cat("FACE:\n")
+print(summary(reg_face_abs_log))
+cat("\n\nPALM:\n")
+print(summary(reg_palm_abs_log))
+
+# Create annotation data
+annotation_abs <- data.frame(
+  site = c("Forehead/Cheek", "Palm"),
+  label = c(
+    sprintf("slope = %.2f\nR² = %.3f\np %s", face_slope, face_r2, 
+            ifelse(face_p < 0.001, "< 0.001", sprintf("= %.3f", face_p))),
+    sprintf("slope = %.2f\nR² = %.3f\np %s", palm_slope, palm_r2,
+            ifelse(palm_p < 0.001, "< 0.001", sprintf("= %.3f", palm_p)))
+  )
+)
+
+p <- ggplot(data = sd_combined, aes(x = mi, y = sd_abs, color = site)) + 
+  geom_point(size = 0.8, alpha = 0.7) + 
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(sd_site_labels)) +
+  geom_text(data = annotation_abs, aes(x = 25, y = Inf, label = label),
+            hjust = 0, vjust = 1.2, size = 3, color = "black", inherit.aes = FALSE) +
+  theme_classic() +
+  labs(title = "Derivative SD vs melanin index (log-log, absorbance)",
+       x = "Melanin index",
+       y = "Standard deviation of derivatives") + 
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "absorbance_mi_sd_log.pdf", width = 10, height = 5)
 ```
 
 ## Correlation between erythema index and melanin index by site
