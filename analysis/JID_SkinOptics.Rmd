@@ -54,7 +54,7 @@ save_pdf <- function(plot_obj, filename, width = 10, height = 5, dir = OUTPUT_DI
   - For each center MI value in the sequence, all EI values corresponding to MI values within the window (center MI $\pm$ 10) are collected, and their standard deviation is computed.
   - The center MI values range from the 1st to the 99th percentile of observed MI values.
 
-- FACE site refers to Forehead or Cheek, while PALM site refers to the Palm of the hand. 
+- FACE site refers to Forehead or Cheek, while PALM site refers to the palm of the hand. 
 
 - Representative FACE MI: 
   - For each subject, the FACE MI is given by the Forehead MI if the Forehead MI is available; otherwise, it is the Cheek MI.
@@ -63,7 +63,7 @@ save_pdf <- function(plot_obj, filename, width = 10, height = 5, dir = OUTPUT_DI
 
 - First derivatives of skin spectra are estimated using local polynomial regression with bandwidth selected by the dpill function, scaled by a factor of 0.7.
 
-- Eumelanin classes are defined based on melanin index ranges as follows:
+- Eumelanin class are defined based on melanin index ranges as follows:
   - Low: $MI < 25$
   - Intermediate low: $25 \leq MI < 50$
   - Intermediate: $50 \leq MI < 75$
@@ -113,7 +113,7 @@ face_ids = unique(issa$C[issa$G %in% c("Forehead", "Cheek")])
 # Check face data before deduplication
 face_temp = spectrum %>% filter(site %in% c("Forehead", "Cheek"))
 cat("Face readings before deduplication:", nrow(face_temp), "\n")
-cat("Unique individuals with Face readings:", n_distinct(face_temp$C), "\n")
+cat("Unique individuals with face readings:", n_distinct(face_temp$C), "\n")
 
 # Deduplicate face data: prioritize Forehead over Cheek, one reading per person
 face_spectrum = face_temp %>%
@@ -131,9 +131,9 @@ cat("Face readings after deduplication:", nrow(face_spectrum), "\n")
 # Check for duplicates and deduplicate palm data (same as face)
 palm_temp = spectrum %>% filter(C %in% face_ids, site == "Palm")
 cat("Palm readings before deduplication:", nrow(palm_temp), "\n")
-cat("Unique individuals with Palm readings:", n_distinct(palm_temp$C), "\n")
+cat("Unique individuals with palm readings:", n_distinct(palm_temp$C), "\n")
 
-# Deduplicate: one Palm reading per person
+# Deduplicate: one palm reading per person
 palm_spectrum = palm_temp %>%
   group_by(C) %>%
   slice_sample(n = 1) %>%
@@ -174,7 +174,7 @@ PlotReflectance <- function(data, sample_size = NULL) {
     geom_line(alpha = 0.6) +  # Add transparency to handle overlapping lines
     # Color gradient from dark to light skin
     scale_color_gradientn(
-      colours = c("#42230c", "#a15c33", "#fbf7ec"),
+      colours = c("#42230c", "#a15c33", "#ede0cc"),
       values = rescale(x = c(50, 40, 20)),
       oob = squish,
       limits = c(20, 130)
@@ -219,7 +219,7 @@ PlotAbsorbance <- function(data, sample_size = NULL) {
     geom_line(alpha = 0.6) +  # Add transparency to handle overlapping lines
     # Color gradient from dark to light skin
     scale_color_gradientn(
-      colours = c("#42230c", "#a15c33", "#fbf7ec"),
+      colours = c("#42230c", "#a15c33", "#ede0cc"),
       values = rescale(x = c(50, 40, 20)),
       oob = squish,
       limits = c(20, 130)
@@ -262,7 +262,7 @@ PlotDerivative <- function(data, sample_size = NULL) {
     geom_hline(yintercept = 0, color = "black") +
     # Color gradient from dark to light skin
     scale_color_gradientn(
-      colours = c("#42230c", "#a15c33", "#fbf7ec"),
+      colours = c("#42230c", "#a15c33", "#ede0cc"),
       values = rescale(x = c(50, 40, 20)),
       oob = squish,
       limits = c(20, 130)
@@ -369,13 +369,13 @@ for (id in face_ids) {
   spectrum_filtered$face_mi[spectrum_filtered$C == id] = face_mi
 }
 
-# define eumelanin classes based on representative face melanin index
-eumelanin_classes_person = cut(spectrum_filtered$face_mi, breaks=c(0, 25, 50, 75, 100, 200))
-eumelanin_classes_person = factor(eumelanin_classes_person, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high", "High"))
+# define eumelanin class based on representative face melanin index
+eumelanin_class_person = cut(spectrum_filtered$face_mi, breaks=c(0, 25, 50, 75, 100, 200))
+eumelanin_class_person = factor(eumelanin_class_person, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high", "High"))
 
 site_info = data.frame(subject = spectrum_filtered$C,
                        site = spectrum_filtered$site,
-                       eumelanin_class = eumelanin_classes_person,
+                       eumelanin_class = eumelanin_class_person,
                        face_mi = spectrum_filtered$face_mi)
 ```
 
@@ -383,7 +383,7 @@ site_info = data.frame(subject = spectrum_filtered$C,
 
 
 ```{r sample distribution, fig.width=4, fig.height=7, out.width="50%"}
-# distribution of melanin index for Forehead, Cheek, and Palm
+# distribution of melanin index for Forehead, Cheek, and palm
 facepalm_spectrum = rbind(face_spectrum, palm_spectrum)
 
 # Verify no duplicates per site
@@ -441,7 +441,7 @@ p <- ggplot(df_bins_with_totals, aes(x = mi_bin, y = site_label, fill = n)) +
   geom_text(aes(label = n), color = "white", size = 3) +
   scale_fill_viridis_c(option = "viridis") +
   labs(x = "Face MI, binned in 10-unit increments", y = "Site", fill = "Subject",
-       title = "Unique subjects per site across 10-unit Face MI bins") +
+       title = "Unique subjects per site across 10-unit face MI bins") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
@@ -453,30 +453,30 @@ save_pdf(p, "heatmap.pdf", width = 12, height = 6)
 ```
 
 ```{r eumelanin-class}
-eumelanin_classes_face = cut(face_spectrum$mi, breaks=c(0, 25, 50, 75, 100, 150))
-eumelanin_classes_face = factor(eumelanin_classes_face, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high", "High"))
-face_spectrum$class = eumelanin_classes_face
-drv_facer_df$class = eumelanin_classes_face
-drv_facea_df$class = eumelanin_classes_face
+eumelanin_class_face = cut(face_spectrum$mi, breaks=c(0, 25, 50, 75, 100, 150))
+eumelanin_class_face = factor(eumelanin_class_face, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high", "High"))
+face_spectrum$class = eumelanin_class_face
+drv_facer_df$class = eumelanin_class_face
+drv_facea_df$class = eumelanin_class_face
 
-eumelanin_classes_palm = cut(palm_spectrum$mi, breaks=c(0, 25, 50, 75, 100)) # no "High" class for palm
-eumelanin_classes_palm = factor(eumelanin_classes_palm, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high"))
-palm_spectrum$palm_class = eumelanin_classes_palm
-drv_palmr_df$palm_class = eumelanin_classes_palm
-drv_palma_df$palm_class = eumelanin_classes_palm
+eumelanin_class_palm = cut(palm_spectrum$mi, breaks=c(0, 25, 50, 75, 100)) # no "High" class for palm
+eumelanin_class_palm = factor(eumelanin_class_palm, labels = c("Low", "Intermediate low", "Intermediate", "Intermediate high"))
+palm_spectrum$palm_class = eumelanin_class_palm
+drv_palmr_df$palm_class = eumelanin_class_palm
+drv_palma_df$palm_class = eumelanin_class_palm
 
-palm_spectrum$face_class = eumelanin_classes_face[match(palm_spectrum$C, face_spectrum$C)]
+palm_spectrum$face_class = eumelanin_class_face[match(palm_spectrum$C, face_spectrum$C)]
 drv_palmr_df$face_class = palm_spectrum$face_class
 drv_palma_df$face_class = palm_spectrum$face_class
 
 # report the table of the number of subjects in each class
-kable(table(eumelanin_classes_face), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Forehead/Cheek)")
-kable(table(eumelanin_classes_palm), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Palm)")
+kable(table(eumelanin_class_face), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Forehead/Cheek)")
+kable(table(eumelanin_class_palm), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Palm)")
 ```
 
-## Reflectance by eumelanin classes
+## Reflectance by eumelanin class
 
-### Face reflectance by face eumelanin class
+### face reflectance by face eumelanin class
 
 ```{r plot-raw-reflectance-by-class-face, fig.width=12, fig.height=4}
 # Calculate n for each class
@@ -491,7 +491,7 @@ p_raw_face <- PlotReflectance(face_spectrum) +
   labs(
     x = "Wavelength (nm)",
     y = "Reflectance",
-    title = "Face reflectance by Face eumelanin classes",
+    title = "Face reflectance by face eumelanin class",
     color = "Face melanin index"
   ) + 
   ylim(0, 75) +
@@ -502,7 +502,7 @@ print(p_raw_face)
 save_pdf(p_raw_face, "reflectance_face.pdf", width = 12, height = 4)
 ```
 
-### Palm reflectance by palm eumelanin class
+### palm reflectance by palm eumelanin class
 
 ```{r plot-raw-reflectance-by-class-palm, fig.width=12, fig.height=4}
 # Calculate n for each palm class
@@ -517,7 +517,7 @@ p <- PlotReflectance(palm_spectrum) +
   labs(
     x = "Wavelength (nm)",
     y = "Reflectance",
-    title = "Palm reflectance by Palm eumelanin classes",
+    title = "Palm reflectance by palm eumelanin class",
     color = "Palm melanin index"
   ) + 
   ylim(0, 75) +
@@ -527,7 +527,7 @@ print(p)
 save_pdf(p, "reflectance_palm.pdf", width = 12, height = 4)
 ```
 
-### Palm reflectance by face eumelanin class
+### palm reflectance for corresponding face eumelanin class
 ```{r plot-raw-reflectance-by-class-palm-face, fig.width=12, fig.height=4}
 # Calculate n for each face class (for palm spectra)
 palm_faceclass_n <- palm_spectrum %>%
@@ -541,7 +541,7 @@ p_raw_palm_face <- PlotReflectance(palm_spectrum) +
   labs(
     x = "Wavelength (nm)",
     y = "Reflectance",
-    title = "Palm reflectance by Face eumelanin classes",
+    title = "Palm reflectance for corresponding face eumelanin class",
     color = "Face melanin index"
   ) + 
   ylim(0, 75) +
@@ -552,9 +552,9 @@ print(p_raw_palm_face)
 save_pdf(p_raw_palm_face, "reflectance_palm_face.pdf", width = 12, height = 4)
 ```
 
-## First derivatives of reflectance by eumelanin classes
+## First derivatives of reflectance by eumelanin class
 
-### Face reflectance derivatives by face eumelanin class
+### face reflectance derivatives by face eumelanin class
 
 ```{r plot-reflectance-by-class-face, fig.width=12, fig.height=4}
 # Calculate n for each class (derivatives)
@@ -569,18 +569,17 @@ p_deriv_face <- PlotDerivative(drv_facer_df) +
   labs(
     x = "Wavelength (nm)",
     y = "Derivative",
-    title = "First derivatives of Face reflectance by Face eumelanin classes",
+    title = "First derivatives of face reflectance by face eumelanin class",
     color = "Face melanin index"
   ) + 
   ylim(-0.6, 0.8) +
-  theme(legend.position = "bottom",
-        axis.title.x = element_blank())
+  theme(legend.position = "bottom")
 
 print(p_deriv_face)
 save_pdf(p_deriv_face, "reflectance_derivative_face.pdf", width = 12, height = 4)
 ```
 
-### Palm reflectance derivatives by palm eumelanin class
+### palm reflectance derivatives by palm eumelanin class
 
 ```{r plot-reflectance-by-class-palm, fig.width=12, fig.height=4}
 # Calculate n for each palm class (derivatives)
@@ -595,7 +594,7 @@ p <- PlotDerivative(drv_palmr_df) +
   labs(
     x = "Wavelength (nm)",
     y = "Derivative",
-    title = "First derivatives of Palm reflectance by Palm eumelanin classes",
+    title = "First derivatives of palm reflectance by palm eumelanin class",
     color = "Palm melanin index"
   ) + 
   ylim(-0.6, 0.8) +
@@ -605,7 +604,7 @@ print(p)
 save_pdf(p, "reflectance_derivative_palm.pdf", width = 12, height = 4)
 ```
 
-### Palm reflectance derivatives by face eumelanin class
+### palm reflectance derivatives by face eumelanin class
 
 ```{r plot-reflectance-by-class-palm-face, fig.width=12, fig.height=4}
 # Calculate n for each face class (palm derivatives)
@@ -620,7 +619,7 @@ p_deriv_palm_face <- PlotDerivative(drv_palmr_df) +
   labs(
     x = "Wavelength (nm)",
     y = "Derivative",
-    title = "First derivatives of Palm reflectance by Face eumelanin classes",
+    title = "First derivatives of palm reflectance for corresponding face eumelanin class",
     color = "Face melanin index"
   ) + 
   ylim(-0.6, 0.8) +
@@ -630,25 +629,26 @@ print(p_deriv_palm_face)
 save_pdf(p_deriv_palm_face, "reflectance_derivative_palm_face.pdf", width = 12, height = 4)
 ```
 
-## Composite figure: Face reflectance and derivatives by eumelanin class
+## Composite figure: face reflectance and derivatives by eumelanin class
 
-```{r composite-reflectance-derivatives, fig.width=12, fig.height=16}
+```{r composite-reflectance-derivatives, fig.width=18, fig.height=7}
 # Combine the four plots into a composite figure
 composite_plot <- ggarrange(
   p_raw_face, p_raw_palm_face, p_deriv_face, p_deriv_palm_face,
   labels = c("a", "b", "c", "d"),
-  ncol = 1, nrow = 4,
+  ncol = 2, nrow = 2,
   common.legend = TRUE,
-  legend = "bottom"
+  legend = "bottom",
+  align = "hv"
 )
 
 print(composite_plot)
-save_pdf(composite_plot, "composite_reflectance_derivatives.pdf", width = 12, height = 16)
+save_pdf(composite_plot, "composite_reflectance_derivatives.pdf", width = 18, height = 7)
 ```
 
-## First derivatives of absorbance by eumelanin classes
+## First derivatives of absorbance by eumelanin class
 
-### Face absorbance derivatives by face eumelanin class
+### face absorbance derivatives by face eumelanin class
 
 ```{r plot-absorbance-by-class-face, fig.width=12, fig.height=4}
 # Calculate n for each class (absorbance derivatives)
@@ -663,7 +663,7 @@ p <- PlotDerivative(drv_facea_df) +
   labs(
     x = "Wavelength (nm)",
     y = "Derivative",
-    title = "First derivatives of Face absorbance by Face eumelanin classes",
+    title = "First derivatives of face absorbance by face eumelanin class",
     color = "Face melanin index"
   ) + 
   ylim(-0.02, 0.02) +
@@ -673,7 +673,7 @@ print(p)
 save_pdf(p, "absorbance_derivative_face.pdf", width = 12, height = 4)
 ```
 
-### Palm absorbance derivatives by palm eumelanin class
+### palm absorbance derivatives by palm eumelanin class
 
 ```{r plot-absorbance-by-class-palm, fig.width=12, fig.height=4}
 # Calculate n for each palm class (absorbance derivatives)
@@ -688,7 +688,7 @@ p <- PlotDerivative(drv_palma_df) +
   labs(
     x = "Wavelength (nm)",
     y = "Derivative",
-    title = "First derivatives of Palm absorbance by Palm eumelanin classes",
+    title = "First derivatives of palm absorbance by palm eumelanin class",
     color = "Palm melanin index"
   ) + 
   ylim(-0.02, 0.02) +
@@ -698,7 +698,7 @@ print(p)
 save_pdf(p, "absorbance_derivative_palm.pdf", width = 12, height = 4)
 ```
 
-### Palm absorbance derivatives by face eumelanin class
+### palm absorbance derivatives by face eumelanin class
 
 ```{r plot-absorbance-by-class-palm-face, fig.width=12, fig.height=4}
 # Calculate n for each face class (palm absorbance derivatives)
@@ -713,7 +713,7 @@ p <- PlotDerivative(drv_palma_df) +
   labs(
     x = "Wavelength (nm)",
     y = "Derivative",
-    title = "First derivatives of Palm absorbance by Face eumelanin classes",
+    title = "First derivatives of palm absorbance by face eumelanin class",
     color = "Palm melanin index"
   ) + 
   ylim(-0.02, 0.02) +
@@ -795,6 +795,387 @@ print(p)
 save_pdf(p, "reflectance_mi_sd_regression.pdf", width = 10, height = 5)
 ```
 
+## Derivative peak and valley analysis (500-650 nm)
+
+For each individual spectrum, we identify the peak (maximum) and valley (minimum) of the first derivative within the 500-650 nm wavelength range. This range captures the hemoglobin absorption features.
+
+```{r peak-valley-calculation}
+# Function to find peak and valley in derivative data within wavelength range
+find_peak_valley <- function(deriv_row, wavelengths, wl_min = 500, wl_max = 650) {
+  # Filter to wavelength range
+  idx <- wavelengths >= wl_min & wavelengths <= wl_max
+  wl_subset <- wavelengths[idx]
+  deriv_subset <- deriv_row[idx]
+  
+  # Find peak (maximum) and valley (minimum)
+  peak_idx <- which.max(deriv_subset)
+  valley_idx <- which.min(deriv_subset)
+  
+  data.frame(
+    peak_wavelength = wl_subset[peak_idx],
+    peak_value = deriv_subset[peak_idx],
+    valley_wavelength = wl_subset[valley_idx],
+    valley_value = deriv_subset[valley_idx]
+  )
+}
+
+# Calculate for face derivatives
+face_peak_valley <- do.call(rbind, lapply(1:nrow(drv_facer), function(i) {
+  find_peak_valley(drv_facer[i, ], wavelengths)
+}))
+face_peak_valley$mi <- face_spectrum$mi
+face_peak_valley$site <- "Forehead/Cheek"
+
+# Calculate for palm derivatives
+palm_peak_valley <- do.call(rbind, lapply(1:nrow(drv_palmr), function(i) {
+  find_peak_valley(drv_palmr[i, ], wavelengths)
+}))
+palm_peak_valley$mi <- palm_spectrum$mi
+palm_peak_valley$site <- "Palm"
+
+# Combine data
+peak_valley_combined <- bind_rows(face_peak_valley, palm_peak_valley)
+
+# Summary statistics
+cat("Face derivative peak/valley summary (500-650 nm):\n")
+cat("Peak wavelength - Mean:", round(mean(face_peak_valley$peak_wavelength), 1), 
+    "SD:", round(sd(face_peak_valley$peak_wavelength), 1), "\n")
+cat("Valley wavelength - Mean:", round(mean(face_peak_valley$valley_wavelength), 1), 
+    "SD:", round(sd(face_peak_valley$valley_wavelength), 1), "\n")
+
+cat("\nPalm derivative peak/valley summary (500-650 nm):\n")
+cat("Peak wavelength - Mean:", round(mean(palm_peak_valley$peak_wavelength), 1), 
+    "SD:", round(sd(palm_peak_valley$peak_wavelength), 1), "\n")
+cat("Valley wavelength - Mean:", round(mean(palm_peak_valley$valley_wavelength), 1), 
+    "SD:", round(sd(palm_peak_valley$valley_wavelength), 1), "\n")
+```
+
+### Distribution of valley and peak wavelengths
+
+```{r peak-valley-wavelength-distribution, fig.width=10, fig.height=5}
+# Reshape for plotting - Valley first (earlier wavelength), then Peak
+pv_wavelength_long <- peak_valley_combined %>%
+  pivot_longer(cols = c(valley_wavelength, peak_wavelength),
+               names_to = "type", values_to = "wavelength") %>%
+  mutate(type = ifelse(type == "peak_wavelength", "Peak", "Valley"),
+         type = factor(type, levels = c("Valley", "Peak")))
+
+# Calculate n for labels
+pv_site_n <- pv_wavelength_long %>%
+  group_by(site) %>%
+  summarise(n = n_distinct(mi)) %>%
+  mutate(label = paste0(site, "\n(n=", n, ")"))
+pv_site_labels <- setNames(pv_site_n$label, pv_site_n$site)
+
+p <- ggplot(pv_wavelength_long, aes(x = wavelength, y = type, fill = type)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.8) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  scale_fill_manual(values = c("Valley" = "steelblue", "Peak" = "coral")) +
+  theme_classic() +
+  labs(title = "Distribution of derivative valley and peak wavelengths (500-650 nm)",
+       x = "Wavelength (nm)",
+       y = "",
+       fill = "Type") +
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "peak_valley_wavelength_distribution.pdf", width = 10, height = 5)
+```
+
+### Distribution of valley and peak values
+
+```{r peak-valley-value-distribution, fig.width=10, fig.height=5}
+# Reshape for plotting - Valley first, then Peak
+pv_value_long <- peak_valley_combined %>%
+  pivot_longer(cols = c(valley_value, peak_value),
+               names_to = "type", values_to = "value") %>%
+  mutate(type = ifelse(type == "peak_value", "Peak", "Valley"),
+         type = factor(type, levels = c("Valley", "Peak")))
+
+p <- ggplot(pv_value_long, aes(x = value, y = type, fill = type)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.8) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  scale_fill_manual(values = c("Valley" = "steelblue", "Peak" = "coral")) +
+  theme_classic() +
+  labs(title = "Distribution of derivative valley and peak values (500-650 nm)",
+       x = "Derivative value",
+       y = "",
+       fill = "Type") +
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "peak_valley_value_distribution.pdf", width = 10, height = 5)
+```
+
+### Regression: Peak/valley location and value vs melanin index
+
+```{r peak-valley-regression}
+# --- FACE regressions ---
+cat("=== FACE: Peak and Valley vs Melanin Index ===\n\n")
+
+# Peak wavelength vs MI
+cat("Peak wavelength ~ MI:\n")
+reg_face_peak_wl <- lm(peak_wavelength ~ mi, data = face_peak_valley)
+print(summary(reg_face_peak_wl))
+
+# Valley wavelength vs MI
+cat("\nValley wavelength ~ MI:\n")
+reg_face_valley_wl <- lm(valley_wavelength ~ mi, data = face_peak_valley)
+print(summary(reg_face_valley_wl))
+
+# Peak value vs MI
+cat("\nPeak value ~ MI:\n")
+reg_face_peak_val <- lm(peak_value ~ mi, data = face_peak_valley)
+print(summary(reg_face_peak_val))
+
+# Valley value vs MI
+cat("\nValley value ~ MI:\n")
+reg_face_valley_val <- lm(valley_value ~ mi, data = face_peak_valley)
+print(summary(reg_face_valley_val))
+
+# --- PALM regressions ---
+cat("\n\n=== PALM: Peak and Valley vs Melanin Index ===\n\n")
+
+# Peak wavelength vs MI
+cat("Peak wavelength ~ MI:\n")
+reg_palm_peak_wl <- lm(peak_wavelength ~ mi, data = palm_peak_valley)
+print(summary(reg_palm_peak_wl))
+
+# Valley wavelength vs MI
+cat("\nValley wavelength ~ MI:\n")
+reg_palm_valley_wl <- lm(valley_wavelength ~ mi, data = palm_peak_valley)
+print(summary(reg_palm_valley_wl))
+
+# Peak value vs MI
+cat("\nPeak value ~ MI:\n")
+reg_palm_peak_val <- lm(peak_value ~ mi, data = palm_peak_valley)
+print(summary(reg_palm_peak_val))
+
+# Valley value vs MI
+cat("\nValley value ~ MI:\n")
+reg_palm_valley_val <- lm(valley_value ~ mi, data = palm_peak_valley)
+print(summary(reg_palm_valley_val))
+```
+
+### Visualization: Peak/valley wavelength vs melanin index
+
+```{r peak-valley-wavelength-vs-mi, fig.width=12, fig.height=10}
+# Plot peak wavelength vs MI
+p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_wavelength, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Peak wavelength vs melanin index",
+       x = "Melanin index",
+       y = "Peak wavelength (nm)") +
+  theme(legend.position = "none")
+
+# Plot valley wavelength vs MI
+p2 <- ggplot(peak_valley_combined, aes(x = mi, y = valley_wavelength, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Valley wavelength vs melanin index",
+       x = "Melanin index",
+       y = "Valley wavelength (nm)") +
+  theme(legend.position = "none")
+
+# Combine plots
+p <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
+print(p)
+save_pdf(p, "peak_valley_wavelength_vs_mi.pdf", width = 12, height = 10)
+```
+
+### Log-transformed: Peak/valley wavelength vs melanin index
+
+```{r peak-valley-wavelength-vs-mi-log, fig.width=12, fig.height=10}
+# Plot peak wavelength vs MI (log-log)
+p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_wavelength, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Peak wavelength vs melanin index (log-log)",
+       x = "log(Melanin index)",
+       y = "log(Peak wavelength (nm))") +
+  theme(legend.position = "none")
+
+# Plot valley wavelength vs MI (log-log)
+p2 <- ggplot(peak_valley_combined, aes(x = mi, y = valley_wavelength, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Valley wavelength vs melanin index (log-log)",
+       x = "log(Melanin index)",
+       y = "log(Valley wavelength (nm))") +
+  theme(legend.position = "none")
+
+# Combine plots
+p <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
+print(p)
+save_pdf(p, "peak_valley_wavelength_vs_mi_log.pdf", width = 12, height = 10)
+```
+
+### Visualization: Peak/valley value vs melanin index
+
+```{r peak-valley-value-vs-mi, fig.width=12, fig.height=10}
+# Plot peak value vs MI
+p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_value, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Peak value vs melanin index",
+       x = "Melanin index",
+       y = "Peak derivative value") +
+  theme(legend.position = "none")
+
+# Plot valley value vs MI
+p2 <- ggplot(peak_valley_combined, aes(x = mi, y = valley_value, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Valley value vs melanin index",
+       x = "Melanin index",
+       y = "Valley derivative value") +
+  theme(legend.position = "none")
+
+# Combine plots
+p <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
+print(p)
+save_pdf(p, "peak_valley_value_vs_mi.pdf", width = 12, height = 10)
+```
+
+### Log-transformed: Peak/valley value vs melanin index
+
+```{r peak-valley-value-vs-mi-log, fig.width=12, fig.height=10}
+# Plot peak value vs MI (log-log)
+p1 <- ggplot(peak_valley_combined %>% filter(peak_value > 0), 
+             aes(x = mi, y = peak_value, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Peak value vs melanin index (log-log)",
+       x = "log(Melanin index)",
+       y = "log(Peak derivative value)") +
+  theme(legend.position = "none")
+
+# Plot valley value vs MI (log-log) - need to handle negative values
+# Use absolute value for log transformation and note that these are negative
+p2 <- ggplot(peak_valley_combined %>% filter(valley_value < 0), 
+             aes(x = mi, y = abs(valley_value), color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Valley value vs melanin index (log-log)",
+       x = "log(Melanin index)",
+       y = "log(|Valley derivative value|)") +
+  theme(legend.position = "none")
+
+# Combine plots
+p <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
+print(p)
+save_pdf(p, "peak_valley_value_vs_mi_log.pdf", width = 12, height = 10)
+```
+
+### Delta (peak - valley) vs melanin index
+
+The delta represents the amplitude of the hemoglobin absorption feature in the derivative spectrum - the difference between the peak and valley values.
+
+```{r peak-valley-delta-calculation}
+# Calculate delta for each individual (peak value - valley value)
+peak_valley_combined <- peak_valley_combined %>%
+  mutate(delta = peak_value - valley_value)
+
+face_peak_valley <- face_peak_valley %>%
+  mutate(delta = peak_value - valley_value)
+
+palm_peak_valley <- palm_peak_valley %>%
+  mutate(delta = peak_value - valley_value)
+
+# Summary statistics
+cat("Delta (peak - valley) summary:\n\n")
+cat("Face:\n")
+print(summary(face_peak_valley$delta))
+cat("\nPalm:\n")
+print(summary(palm_peak_valley$delta))
+```
+
+```{r peak-valley-delta-regression}
+# --- FACE delta regression ---
+cat("=== FACE: Delta (peak - valley) vs Melanin Index ===\n\n")
+reg_face_delta <- lm(delta ~ mi, data = face_peak_valley)
+print(summary(reg_face_delta))
+
+# --- PALM delta regression ---
+cat("\n\n=== PALM: Delta (peak - valley) vs Melanin Index ===\n\n")
+reg_palm_delta <- lm(delta ~ mi, data = palm_peak_valley)
+print(summary(reg_palm_delta))
+```
+
+### Visualization: Delta vs melanin index
+
+```{r peak-valley-delta-vs-mi, fig.width=12, fig.height=5}
+# Plot delta vs MI
+p <- ggplot(peak_valley_combined, aes(x = mi, y = delta, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Delta (peak - valley) vs melanin index",
+       x = "Melanin index",
+       y = "Delta (peak - valley derivative value)") +
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "peak_valley_delta_vs_mi.pdf", width = 12, height = 5)
+```
+
+### Log-transformed: Delta vs melanin index
+
+```{r peak-valley-delta-vs-mi-log, fig.width=12, fig.height=5}
+# Plot delta vs MI (log-log)
+p <- ggplot(peak_valley_combined %>% filter(delta > 0), 
+            aes(x = mi, y = delta, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  theme_classic() +
+  labs(title = "Delta (peak - valley) vs melanin index (log-log)",
+       x = "log(Melanin index)",
+       y = "log(Delta (peak - valley))") +
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "peak_valley_delta_vs_mi_log.pdf", width = 12, height = 5)
+```
+
 ## Correlation between absorbance derivative sd and melanin index
 
 ```{r plot-derivative-sd-mi-abs, fig.width=10, fig.height=5}
@@ -847,7 +1228,7 @@ save_pdf(p, "ei_mi_correlation.pdf", width = 10, height = 5)
 ```{r palmei-facemi-correlation, fig.width=4, fig.height=4, out.width="50%"}
 palm_spectrum$face_mi = face_spectrum$mi[match(palm_spectrum$C, face_spectrum$C)]
 p <- ggplot(data = palm_spectrum) + geom_point(aes(face_mi, ei), color = "purple", size = 0.8) + theme_classic() +
-  labs(title = paste0("Palm EI vs Face MI (n=", nrow(palm_spectrum), ")"),
+  labs(title = paste0("Palm EI vs face MI (n=", nrow(palm_spectrum), ")"),
        x = "Face Melanin index",
        y = "Palm Erythema index") + xlim(0, 120) + ylim(10, 55)
 
@@ -918,7 +1299,7 @@ palm_ei_sd = sapply(face_mi_seq, function(mi_val) {
 palm_ei_sd_df = data.frame(mi = face_mi_seq, ei_sd = palm_ei_sd)
 max_mi = palm_ei_sd_df$mi[which.max(palm_ei_sd_df$ei_sd)]
 p <- ggplot(data = palm_ei_sd_df) + geom_line(aes(mi, ei_sd), color = "purple") + theme_classic() +
-  labs(title = "Palm EI vs Face MI",
+  labs(title = "Palm EI vs face MI",
        x = "Face Melanin index",
        y = "Palm Erythema index standard deviation") + xlim(0, 120) +
   geom_vline(xintercept = max_mi, linetype = "dashed", color = "red") +
