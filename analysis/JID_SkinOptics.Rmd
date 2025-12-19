@@ -1374,6 +1374,176 @@ print(p)
 save_pdf(p, "absorbance_mi_sd_log.pdf", width = 10, height = 5)
 ```
 
+## Reflectance delta (680 nm - 555 nm) vs melanin index
+
+The erythema index is based on the ratio of reflectance at 680 nm to the average reflectance at 550-560 nm (approximating 555 nm). Here we examine the raw reflectance difference (delta) between these wavelengths as a function of melanin index.
+
+```{r reflectance-delta-calculation}
+# Calculate reflectance delta: R680 - average(R550, R560)
+# This represents the raw reflectance difference used in erythema index
+face_spectrum <- face_spectrum %>%
+  mutate(R555_approx = (R550 + R560) / 2,
+         ref_delta = R680 - R555_approx)
+
+palm_spectrum <- palm_spectrum %>%
+  mutate(R555_approx = (R550 + R560) / 2,
+         ref_delta = R680 - R555_approx)
+
+# Combine for faceted plot
+ref_delta_combined <- bind_rows(
+  face_spectrum %>% select(site, mi, ref_delta, R680, R555_approx),
+  palm_spectrum %>% select(site, mi, ref_delta, R680, R555_approx)
+)
+
+# Calculate n for each site
+ref_delta_site_n <- ref_delta_combined %>%
+  group_by(site) %>%
+  summarise(n = n()) %>%
+  mutate(label = paste0(site, "\n(n=", n, ")"))
+ref_delta_site_labels <- setNames(ref_delta_site_n$label, ref_delta_site_n$site)
+
+# Summary statistics
+cat("=== Reflectance delta (R680 - R555_approx) summary ===\n\n")
+ref_delta_combined %>%
+  group_by(site) %>%
+  summarise(
+    mean_delta = mean(ref_delta),
+    sd_delta = sd(ref_delta),
+    min_delta = min(ref_delta),
+    max_delta = max(ref_delta),
+    mean_R680 = mean(R680),
+    mean_R555 = mean(R555_approx)
+  ) %>%
+  print()
+```
+
+### Visualization: Reflectance delta vs melanin index
+
+```{r reflectance-delta-vs-mi, fig.width=10, fig.height=5, out.width="50%"}
+# Helper function to format p-values (handles very small values)
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
+# Run linear regressions for annotation
+reg_face_lin <- lm(ref_delta ~ mi, data = face_spectrum)
+reg_palm_lin <- lm(ref_delta ~ mi, data = palm_spectrum)
+
+# Extract regression stats
+face_r2_lin <- summary(reg_face_lin)$r.squared
+face_slope_lin <- coef(reg_face_lin)[2]
+face_p_lin <- summary(reg_face_lin)$coefficients[2, 4]
+
+palm_r2_lin <- summary(reg_palm_lin)$r.squared
+palm_slope_lin <- coef(reg_palm_lin)[2]
+palm_p_lin <- summary(reg_palm_lin)$coefficients[2, 4]
+
+# Create annotation data
+annotation_ref_lin <- data.frame(
+  site = c("Forehead/Cheek", "Palm"),
+  label = c(
+    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope_lin, face_r2_lin, format_pval(face_p_lin)),
+    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope_lin, palm_r2_lin, format_pval(palm_p_lin))
+  ),
+  x = 100,
+  y = max(ref_delta_combined$ref_delta) * 0.95
+)
+
+p <- ggplot(ref_delta_combined, aes(x = mi, y = ref_delta, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(ref_delta_site_labels)) +
+  geom_text(data = annotation_ref_lin, aes(x = x, y = y, label = label),
+            hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
+  theme_classic() +
+  labs(title = "Reflectance delta (R680 - R555) vs melanin index",
+       x = "Melanin index",
+       y = "Reflectance delta (R680 - R555)") +
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "reflectance_delta_vs_mi.pdf", width = 10, height = 5)
+```
+
+### Log-transformed: Reflectance delta vs melanin index
+
+Log-log regression tests whether the reflectance difference between 680 nm and ~555 nm follows a power-law relationship with melanin content. Note: only positive delta values can be log-transformed.
+
+```{r reflectance-delta-vs-mi-log, fig.width=10, fig.height=5, out.width="50%"}
+# Helper function to format p-values (handles very small values)
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
+# Filter for positive deltas only (required for log transform)
+delta_face_pos <- face_spectrum %>% filter(ref_delta > 0)
+delta_palm_pos <- palm_spectrum %>% filter(ref_delta > 0)
+
+cat("Face: ", nrow(delta_face_pos), " of ", nrow(face_spectrum), " have positive delta\n")
+cat("Palm: ", nrow(delta_palm_pos), " of ", nrow(palm_spectrum), " have positive delta\n")
+
+# Run log-log regressions
+reg_face_delta <- lm(log(ref_delta) ~ log(mi), data = delta_face_pos)
+reg_palm_delta <- lm(log(ref_delta) ~ log(mi), data = delta_palm_pos)
+
+# Extract regression stats
+face_r2 <- summary(reg_face_delta)$r.squared
+face_slope <- coef(reg_face_delta)[2]
+face_p <- summary(reg_face_delta)$coefficients[2, 4]
+
+palm_r2 <- summary(reg_palm_delta)$r.squared
+palm_slope <- coef(reg_palm_delta)[2]
+palm_p <- summary(reg_palm_delta)$coefficients[2, 4]
+
+# Print regression summaries
+cat("\n=== Log-log regression: log(ref_delta) ~ log(mi) ===\n\n")
+cat("FACE:\n")
+print(summary(reg_face_delta))
+cat("\n\nPALM:\n")
+print(summary(reg_palm_delta))
+
+# Filter combined data for plotting
+ref_delta_filtered <- ref_delta_combined %>% filter(ref_delta > 0)
+
+# Create annotation data
+annotation_ref_delta <- data.frame(
+  site = c("Forehead/Cheek", "Palm"),
+  label = c(
+    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
+    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
+  ),
+  x = 90,
+  y = max(ref_delta_filtered$ref_delta) * 0.9
+)
+
+p <- ggplot(ref_delta_filtered, aes(x = mi, y = ref_delta, color = site)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
+  facet_wrap(~site, nrow = 1, labeller = as_labeller(ref_delta_site_labels)) +
+  geom_text(data = annotation_ref_delta, aes(x = x, y = y, label = label),
+            hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
+  theme_classic() +
+  labs(title = "Reflectance delta (R680 - R555) vs melanin index (log-log)",
+       x = "log(Melanin Index)",
+       y = "log(Reflectance delta)") +
+  theme(legend.position = "none")
+
+print(p)
+save_pdf(p, "reflectance_delta_vs_mi_log.pdf", width = 10, height = 5)
+```
+
 ## Correlation between erythema index and melanin index by site
 
 ```{r ei-mi-correlation, fig.width=10, fig.height=5}
@@ -1405,15 +1575,180 @@ print(p)
 save_pdf(p, "ei_mi_correlation.pdf", width = 10, height = 5)
 ```
 
-```{r palmei-facemi-correlation, fig.width=4, fig.height=4, out.width="50%"}
-palm_spectrum$face_mi = face_spectrum$mi[match(palm_spectrum$C, face_spectrum$C)]
-p <- ggplot(data = palm_spectrum) + geom_point(aes(face_mi, ei), color = "purple", size = 0.8) + theme_classic() +
-  labs(title = paste0("Palm EI vs face MI (n=", nrow(palm_spectrum), ")"),
+### Face erythema index vs face melanin index
+
+```{r faceei-facemi-correlation, fig.width=5, fig.height=5, out.width="50%"}
+# Helper function to format p-values
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
+# Run linear regression
+reg_face_ei_lin <- lm(ei ~ mi, data = face_spectrum)
+
+# Extract regression stats
+face_ei_r2_lin <- summary(reg_face_ei_lin)$r.squared
+face_ei_slope_lin <- coef(reg_face_ei_lin)[2]
+face_ei_p_lin <- summary(reg_face_ei_lin)$coefficients[2, 4]
+
+# Print regression summary
+cat("=== Linear regression: face_ei ~ face_mi ===\n")
+print(summary(reg_face_ei_lin))
+
+# Create annotation
+annotation_face_ei_lin <- sprintf("slope = %.3f\nR² = %.3f\n%s", face_ei_slope_lin, face_ei_r2_lin, format_pval(face_ei_p_lin))
+
+p <- ggplot(data = face_spectrum, aes(x = mi, y = ei)) + 
+  geom_point(color = "pink", size = 0.8, alpha = 0.7) + 
+  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
+  annotate("text", x = 110, y = 52, label = annotation_face_ei_lin,
+           hjust = 1, vjust = 1, size = 3, color = "black") +
+  theme_classic() +
+  labs(title = paste0("Face EI vs Face MI (n=", nrow(face_spectrum), ")"),
        x = "Face Melanin index",
-       y = "Palm Erythema index") + xlim(0, 120) + ylim(10, 55)
+       y = "Face Erythema index") + 
+  xlim(0, 120) + ylim(10, 55)
 
 print(p)
-save_pdf(p, "palm_ei_face_mi_correlation.pdf", width = 4, height = 4)
+save_pdf(p, "face_ei_face_mi_correlation.pdf", width = 5, height = 5)
+```
+
+### Log-transformed: Face erythema index vs face melanin index
+
+Log-log regression tests whether face erythema index follows a power-law relationship with face melanin content.
+
+```{r faceei-facemi-log, fig.width=5, fig.height=5, out.width="50%"}
+# Helper function to format p-values (handles very small values)
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
+# Run log-log regression
+reg_face_ei <- lm(log(ei) ~ log(mi), data = face_spectrum %>% filter(ei > 0, mi > 0))
+
+# Extract regression stats
+face_ei_r2 <- summary(reg_face_ei)$r.squared
+face_ei_slope <- coef(reg_face_ei)[2]
+face_ei_p <- summary(reg_face_ei)$coefficients[2, 4]
+
+# Print regression summary
+cat("=== Log-log regression: log(face_ei) ~ log(face_mi) ===\n")
+print(summary(reg_face_ei))
+
+# Create annotation
+annotation_face_ei <- sprintf("slope = %.2f\nR² = %.3f\n%s", face_ei_slope, face_ei_r2, format_pval(face_ei_p))
+
+p <- ggplot(data = face_spectrum %>% filter(ei > 0, mi > 0), aes(x = mi, y = ei)) + 
+  geom_point(color = "pink", size = 0.8, alpha = 0.7) + 
+  geom_smooth(method = "lm", se = TRUE, color = "darkred") +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  annotate("text", x = 90, y = max(face_spectrum$ei) * 0.9, label = annotation_face_ei,
+           hjust = 1, vjust = 1, size = 3, color = "black") +
+  theme_classic() +
+  labs(title = paste0("Face EI vs Face MI (log-log, n=", nrow(face_spectrum), ")"),
+       x = "log(Face Melanin index)",
+       y = "log(Face Erythema index)")
+
+print(p)
+save_pdf(p, "face_ei_face_mi_log.pdf", width = 5, height = 5)
+```
+
+### Palm erythema index vs face melanin index
+
+```{r palmei-facemi-correlation, fig.width=5, fig.height=5, out.width="50%"}
+palm_spectrum$face_mi = face_spectrum$mi[match(palm_spectrum$C, face_spectrum$C)]
+
+# Helper function to format p-values
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
+# Run linear regression
+reg_palm_ei_lin <- lm(ei ~ face_mi, data = palm_spectrum)
+
+# Extract regression stats
+palm_ei_r2_lin <- summary(reg_palm_ei_lin)$r.squared
+palm_ei_slope_lin <- coef(reg_palm_ei_lin)[2]
+palm_ei_p_lin <- summary(reg_palm_ei_lin)$coefficients[2, 4]
+
+# Print regression summary
+cat("=== Linear regression: palm_ei ~ face_mi ===\n")
+print(summary(reg_palm_ei_lin))
+
+# Create annotation
+annotation_palm_ei_lin <- sprintf("slope = %.3f\nR² = %.3f\n%s", palm_ei_slope_lin, palm_ei_r2_lin, format_pval(palm_ei_p_lin))
+
+p <- ggplot(data = palm_spectrum, aes(x = face_mi, y = ei)) + 
+  geom_point(color = "steelblue", size = 0.8, alpha = 0.7) + 
+  geom_smooth(method = "lm", se = TRUE, color = "darkblue") +
+  annotate("text", x = 110, y = 52, label = annotation_palm_ei_lin,
+           hjust = 1, vjust = 1, size = 3, color = "black") +
+  theme_classic() +
+  labs(title = paste0("Palm EI vs Face MI (n=", nrow(palm_spectrum), ")"),
+       x = "Face Melanin index",
+       y = "Palm Erythema index") + 
+  xlim(0, 120) + ylim(10, 55)
+
+print(p)
+save_pdf(p, "palm_ei_face_mi_correlation.pdf", width = 5, height = 5)
+```
+
+### Log-transformed: Palm erythema index vs face melanin index
+
+Log-log regression tests whether palm erythema index follows a power-law relationship with face melanin content. This cross-site comparison may reveal systemic hemoglobin patterns independent of local melanin.
+
+```{r palmei-facemi-log, fig.width=5, fig.height=5, out.width="50%"}
+# Helper function to format p-values
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
+# Run log-log regression
+reg_palm_ei <- lm(log(ei) ~ log(face_mi), data = palm_spectrum %>% filter(ei > 0, face_mi > 0))
+
+# Extract regression stats
+palm_ei_r2 <- summary(reg_palm_ei)$r.squared
+palm_ei_slope <- coef(reg_palm_ei)[2]
+palm_ei_p <- summary(reg_palm_ei)$coefficients[2, 4]
+
+# Print regression summary
+cat("=== Log-log regression: log(palm_ei) ~ log(face_mi) ===\n")
+print(summary(reg_palm_ei))
+
+# Create annotation
+annotation_palm_ei <- sprintf("slope = %.2f\nR² = %.3f\n%s", palm_ei_slope, palm_ei_r2, format_pval(palm_ei_p))
+
+p <- ggplot(data = palm_spectrum %>% filter(ei > 0, face_mi > 0), aes(x = face_mi, y = ei)) + 
+  geom_point(color = "steelblue", size = 0.8, alpha = 0.7) + 
+  geom_smooth(method = "lm", se = TRUE, color = "darkblue") +
+  scale_x_log10(breaks = c(20, 30, 50, 100)) +
+  scale_y_log10() +
+  annotate("text", x = 90, y = max(palm_spectrum$ei) * 0.9, label = annotation_palm_ei,
+           hjust = 1, vjust = 1, size = 3, color = "black") +
+  theme_classic() +
+  labs(title = paste0("Palm EI vs Face MI (log-log, n=", nrow(palm_spectrum), ")"),
+       x = "log(Face Melanin index)",
+       y = "log(Palm Erythema index)")
+
+print(p)
+save_pdf(p, "palm_ei_face_mi_log.pdf", width = 5, height = 5)
 ```
 
 ## Correlation between erythema index variability and melanin index by site
