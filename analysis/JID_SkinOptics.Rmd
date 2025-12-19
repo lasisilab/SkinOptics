@@ -15,6 +15,11 @@ library(openxlsx)
 library(KernSmooth)
 library(here)
 library(ggpubr)
+library(ggstatsplot)
+library(lme4)
+library(broom.mixed)  # tidy mixed model outputs
+library(ggeffects)    # predicted lines + CI
+
 
 # Set global chunk options for the document
 knitr::opts_chunk$set(
@@ -38,6 +43,136 @@ save_pdf <- function(plot_obj, filename, width = 10, height = 5, dir = OUTPUT_DI
   filepath <- file.path(dir, filename)
   ggsave(filename = filepath, plot = plot_obj, width = width, height = height, device = "pdf")
   invisible(filepath)
+}
+```
+
+```{r util_plot_functions, include=FALSE}
+# =============================================================================
+# REUSABLE UTILITY FUNCTIONS
+# =============================================================================
+
+# Format p-values (handles very small values)
+format_pval <- function(p) {
+  if (p < 2.2e-16) {
+    return("p < 2.2e-16")
+  } else {
+    return(sprintf("p = %.2e", p))
+  }
+}
+
+# Extract regression statistics from an lm object
+get_reg_stats <- function(model) {
+  summ <- summary(model)
+  list(
+    r2 = summ$r.squared,
+    slope = coef(model)[2],
+    intercept = coef(model)[1],
+    p = summ$coefficients[2, 4]
+  )
+}
+
+# Create annotation label from regression stats
+make_annotation_label <- function(stats, slope_digits = 2) {
+  sprintf("slope = %.*f\nR² = %.3f\n%s", 
+          slope_digits, stats$slope, stats$r2, format_pval(stats$p))
+}
+
+# Run regression and return stats for both face and palm
+run_faceted_regression <- function(data_face, data_palm, formula, log_transform = FALSE) {
+  if (log_transform) {
+    # For log-log regression, we need to transform the formula
+    # Assumes formula is y ~ x where we want log(y) ~ log(x)
+    reg_face <- lm(formula, data = data_face)
+    reg_palm <- lm(formula, data = data_palm)
+  } else {
+    reg_face <- lm(formula, data = data_face)
+    reg_palm <- lm(formula, data = data_palm)
+  }
+  
+  list(
+    face = get_reg_stats(reg_face),
+    palm = get_reg_stats(reg_palm),
+    face_model = reg_face,
+    palm_model = reg_palm
+  )
+}
+
+# Create annotation dataframe for faceted plots
+make_facet_annotations <- function(face_stats, palm_stats, x_pos, y_pos, slope_digits = 2) {
+  data.frame(
+    site = c("Forehead/Cheek", "Palm"),
+    label = c(
+      make_annotation_label(face_stats, slope_digits),
+      make_annotation_label(palm_stats, slope_digits)
+    ),
+    x = x_pos,
+    y = y_pos
+  )
+}
+
+# Standard faceted scatter plot with regression line and annotations
+plot_faceted_scatter <- function(data, x_var, y_var, annotation_df, 
+                                  site_labels, title, x_lab, y_lab,
+                                  log_x = FALSE, log_y = FALSE,
+                                  colors = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) {
+  p <- ggplot(data, aes(x = .data[[x_var]], y = .data[[y_var]], color = site)) +
+    geom_point(size = 0.8, alpha = 0.7) +
+    geom_smooth(method = "lm", se = TRUE) +
+    scale_color_manual(values = colors) +
+    facet_wrap(~site, nrow = 1, labeller = as_labeller(site_labels)) +
+    geom_text(data = annotation_df, aes(x = x, y = y, label = label),
+              hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
+    theme_classic() +
+    labs(title = title, x = x_lab, y = y_lab) +
+    theme(legend.position = "none")
+  
+  if (log_x) {
+    p <- p + scale_x_log10(breaks = c(20, 30, 50, 100))
+  }
+  if (log_y) {
+    p <- p + scale_y_log10()
+  }
+  
+  return(p)
+}
+
+# Print regression summary with custom header
+print_reg_summary <- function(model, header = "Regression Summary") {
+  cat(paste0("=== ", header, " ==="), "\n")
+  print(summary(model))
+  cat("\n")
+}
+
+# Single scatter plot with regression line and annotation
+plot_single_scatter <- function(data, x_var, y_var, stats, 
+                                 title, x_lab, y_lab, color = "pink",
+                                 smooth_color = "darkred",
+                                 log_x = FALSE, log_y = FALSE,
+                                 annotation_x = NULL, annotation_y = NULL,
+                                 slope_digits = 3) {
+  
+  annotation_label <- make_annotation_label(stats, slope_digits)
+  
+  # Set default annotation position if not provided
+  if (is.null(annotation_x)) annotation_x <- max(data[[x_var]], na.rm = TRUE) * 0.95
+  if (is.null(annotation_y)) annotation_y <- max(data[[y_var]], na.rm = TRUE) * 0.95
+  
+  p <- ggplot(data, aes(x = .data[[x_var]], y = .data[[y_var]])) +
+    geom_point(color = color, size = 0.8, alpha = 0.7) +
+    geom_smooth(method = "lm", se = TRUE, color = smooth_color) +
+    annotate("text", x = annotation_x, y = annotation_y, label = annotation_label,
+             hjust = 1, vjust = 1, size = 3, color = "black") +
+    theme_classic() +
+    labs(title = title, x = x_lab, y = y_lab)
+  
+  if (log_x) {
+    p <- p + scale_x_log10(breaks = c(20, 30, 50, 100))
+  }
+  if (log_y) {
+    p <- p + scale_y_log10()
+  }
+  
+  return(p)
 }
 ```
 
@@ -143,9 +278,9 @@ cat("Palm readings after deduplication:", nrow(palm_spectrum), "\n")
 ```
 
 
-```{r util_plot_functions}
+```{r spectra_plot_functions}
 # ==============================================================================
-# PLOTTING FUNCTIONS
+# SPECTRA PLOTTING FUNCTIONS
 # ==============================================================================
 
 #' Generate skin reflectance spectra plot
@@ -411,6 +546,7 @@ p <- ggplot(facepalm_spectrum, aes(x = mi, fill = site)) +
 
 print(p)
 save_pdf(p, "mi_distribution.pdf", width = 4, height = 7)
+#ggsave("output/mi_distribution.png", plot = p, width = 4, height = 7, dpi = 300)
 ```
 
 ## Unique subjects per site across representative face melanin index bins (Heatmap)
@@ -476,7 +612,7 @@ kable(table(eumelanin_class_palm), col.names = c("Eumelanin class", "Number of s
 
 ## Reflectance by eumelanin class
 
-### face reflectance by face eumelanin class
+### Face reflectance by face eumelanin class
 
 ```{r plot-raw-reflectance-by-class-face, fig.width=12, fig.height=4}
 # Calculate n for each class
@@ -502,7 +638,7 @@ print(p_raw_face)
 save_pdf(p_raw_face, "reflectance_face.pdf", width = 12, height = 4)
 ```
 
-### palm reflectance by palm eumelanin class
+### Palm reflectance by palm eumelanin class
 
 ```{r plot-raw-reflectance-by-class-palm, fig.width=12, fig.height=4}
 # Calculate n for each palm class
@@ -527,7 +663,7 @@ print(p)
 save_pdf(p, "reflectance_palm.pdf", width = 12, height = 4)
 ```
 
-### palm reflectance for corresponding face eumelanin class
+### Palm reflectance for corresponding face eumelanin class
 ```{r plot-raw-reflectance-by-class-palm-face, fig.width=12, fig.height=4}
 # Calculate n for each face class (for palm spectra)
 palm_faceclass_n <- palm_spectrum %>%
@@ -554,7 +690,7 @@ save_pdf(p_raw_palm_face, "reflectance_palm_face.pdf", width = 12, height = 4)
 
 ## First derivatives of reflectance by eumelanin class
 
-### face reflectance derivatives by face eumelanin class
+### Face reflectance derivatives by face eumelanin class
 
 ```{r plot-reflectance-by-class-face, fig.width=12, fig.height=4}
 # Calculate n for each class (derivatives)
@@ -579,7 +715,7 @@ print(p_deriv_face)
 save_pdf(p_deriv_face, "reflectance_derivative_face.pdf", width = 12, height = 4)
 ```
 
-### palm reflectance derivatives by palm eumelanin class
+### Palm reflectance derivatives by palm eumelanin class
 
 ```{r plot-reflectance-by-class-palm, fig.width=12, fig.height=4}
 # Calculate n for each palm class (derivatives)
@@ -631,10 +767,10 @@ save_pdf(p_deriv_palm_face, "reflectance_derivative_palm_face.pdf", width = 12, 
 
 ## Composite figure: face reflectance and derivatives by eumelanin class
 
-```{r composite-reflectance-derivatives, fig.width=18, fig.height=7}
+```{r composite-reflectance-derivatives, fig.width=18, fig.height=6}
 # Combine the four plots into a composite figure
 composite_plot <- ggarrange(
-  p_raw_face, p_raw_palm_face, p_deriv_face, p_deriv_palm_face,
+  p_raw_face, p_deriv_face, p_raw_palm_face, p_deriv_palm_face,
   labels = c("a", "b", "c", "d"),
   ncol = 2, nrow = 2,
   common.legend = TRUE,
@@ -698,7 +834,7 @@ print(p)
 save_pdf(p, "absorbance_derivative_palm.pdf", width = 12, height = 4)
 ```
 
-### palm absorbance derivatives by face eumelanin class
+### Palm absorbance derivatives by face eumelanin class
 
 ```{r plot-absorbance-by-class-palm-face, fig.width=12, fig.height=4}
 # Calculate n for each face class (palm absorbance derivatives)
@@ -735,9 +871,11 @@ sd_abs_palm = apply(drv_palma, MARGIN = 1, sd)
 sd_palm = data.frame(site = "Palm", sd_ref = sd_ref_palm, sd_abs = sd_abs_palm, mi = palm_spectrum$mi) %>% mutate(log_mi = log(mi))
 ```
 
-## Correlation between reflectance derivative sd and melanin index
+## Correlation between reflectance derivative sd and melanin index (log-log)
 
-```{r plot-derivative-sd-mi-ref, fig.width=10, fig.height=5}
+A log-log regression tests for a power-law relationship between derivative variability and melanin content. The slope in log-log space represents the exponent of this power-law relationship.
+
+```{r plot-derivative-sd-mi-ref-log, fig.width=10, fig.height=5}
 # Combine face and palm data for faceted plotting
 sd_combined = bind_rows(sd_face, sd_palm)
 
@@ -748,97 +886,22 @@ sd_site_n <- sd_combined %>%
   mutate(label = paste0(site, "\n(n=", n, ")"))
 sd_site_labels <- setNames(sd_site_n$label, sd_site_n$site)
 
-p <- ggplot(data = sd_combined, aes(x = log_mi, y = sd_ref, color = site)) + 
-  geom_point(size = 0.8, alpha = 0.7) + 
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(sd_site_labels)) +
-  theme_classic() +
-  labs(title = "Correlation between reflectance derivative sd and melanin index",
-       x = "log(Melanin index)",
-       y = "Standard deviation of derivatives") + 
-  ylim(0, 0.25) + xlim(2.75, 4.75) +
-  theme(legend.position = "none")
-
-print(p)
-save_pdf(p, "reflectance_mi_sd.pdf", width = 10, height = 5)
-```
-
-- Regression analysis
-
-```{r regression-drv-mi, fig.width=10, fig.height=5}
-# polynomial regression for reflectance sd vs log(mi)
-# face
-reg_face_model = lm(sd_ref ~ log_mi + I(log_mi^2), data = sd_face)
-summary(reg_face_model)
-
-# palm
-reg_palm_model = lm(sd_ref ~ log_mi, data = sd_palm)
-summary(reg_palm_model)
-
-# Plot with regression lines using facets
-p <- ggplot(data = sd_combined, aes(x = log_mi, y = sd_ref, color = site)) + 
-  geom_point(size = 0.8, alpha = 0.7) + 
-  geom_smooth(data = filter(sd_combined, site == "Forehead/Cheek"), 
-              method = "lm", formula = y ~ poly(x, 2), color = "black", se = FALSE) +
-  geom_smooth(data = filter(sd_combined, site == "Palm"), 
-              method = "lm", formula = y ~ poly(x, 1), color = "black", se = FALSE) +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(sd_site_labels)) +
-  theme_classic() +
-  labs(title = "Regression of reflectance derivative sd on log(melanin index)",
-       x = "log(Melanin index)",
-       y = "Standard deviation of derivatives") + 
-  ylim(0, 0.25) + xlim(2.75, 4.75) +
-  theme(legend.position = "none")
-
-print(p)
-save_pdf(p, "reflectance_mi_sd_regression.pdf", width = 10, height = 5)
-```
-
-### Log-transformed: Derivative SD vs melanin index (reflectance)
-
-A log-log regression tests for a power-law relationship between derivative variability and melanin content. The slope in log-log space represents the exponent of this power-law relationship.
-
-```{r plot-derivative-sd-mi-ref-log, fig.width=10, fig.height=5}
-# Helper function to format p-values (handles very small values)
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
 # Run log-log regressions
 reg_face_log <- lm(log(sd_ref) ~ log(mi), data = sd_face)
 reg_palm_log <- lm(log(sd_ref) ~ log(mi), data = sd_palm)
 
-# Extract regression stats for annotation
-face_r2 <- summary(reg_face_log)$r.squared
-face_slope <- coef(reg_face_log)[2]
-face_p <- summary(reg_face_log)$coefficients[2, 4]
-
-palm_r2 <- summary(reg_palm_log)$r.squared
-palm_slope <- coef(reg_palm_log)[2]
-palm_p <- summary(reg_palm_log)$coefficients[2, 4]
+# Extract regression stats using helper function
+face_stats <- get_reg_stats(reg_face_log)
+palm_stats <- get_reg_stats(reg_palm_log)
 
 # Print regression summaries
-cat("=== Log-log regression: log(sd_ref) ~ log(mi) ===\n\n")
-cat("FACE:\n")
-print(summary(reg_face_log))
-cat("\n\nPALM:\n")
-print(summary(reg_palm_log))
+print_reg_summary(reg_face_log, "Log-log regression: log(sd_ref) ~ log(mi) - FACE")
+print_reg_summary(reg_palm_log, "Log-log regression: log(sd_ref) ~ log(mi) - PALM")
 
-# Create annotation data with actual coordinates
-annotation_df <- data.frame(
-  site = c("Forehead/Cheek", "Palm"),
-  label = c(
-    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
-    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
-  ),
-  x = 90,
-  y = max(sd_combined$sd_ref) * 0.9
-)
+# Create annotation data using helper function
+annotation_df <- make_facet_annotations(face_stats, palm_stats, 
+                                         x_pos = 90, 
+                                         y_pos = max(sd_combined$sd_ref) * 0.9)
 
 p <- ggplot(data = sd_combined, aes(x = mi, y = sd_ref, color = site)) + 
   geom_point(size = 0.8, alpha = 0.7) + 
@@ -888,6 +951,7 @@ face_peak_valley <- do.call(rbind, lapply(1:nrow(drv_facer), function(i) {
   find_peak_valley(drv_facer[i, ], wavelengths)
 }))
 face_peak_valley$mi <- face_spectrum$mi
+face_peak_valley$id <- face_spectrum$C
 face_peak_valley$site <- "Forehead/Cheek"
 
 # Calculate for palm derivatives
@@ -895,6 +959,7 @@ palm_peak_valley <- do.call(rbind, lapply(1:nrow(drv_palmr), function(i) {
   find_peak_valley(drv_palmr[i, ], wavelengths)
 }))
 palm_peak_valley$mi <- palm_spectrum$mi
+palm_peak_valley$id <- palm_spectrum$C
 palm_peak_valley$site <- "Palm"
 
 # Combine data
@@ -914,225 +979,154 @@ cat("Valley wavelength - Mean:", round(mean(palm_peak_valley$valley_wavelength),
     "SD:", round(sd(palm_peak_valley$valley_wavelength), 1), "\n")
 ```
 
-### Distribution of valley and peak wavelengths
+### Distribution and comparison of valley and peak characteristics: Face vs Palm
 
-```{r peak-valley-wavelength-distribution, fig.width=10, fig.height=5}
-# Reshape for plotting - Valley first (earlier wavelength), then Peak
-pv_wavelength_long <- peak_valley_combined %>%
-  pivot_longer(cols = c(valley_wavelength, peak_wavelength),
-               names_to = "type", values_to = "wavelength") %>%
-  mutate(type = ifelse(type == "peak_wavelength", "Peak", "Valley"),
-         type = factor(type, levels = c("Valley", "Peak")))
+This analysis compares derivative valley and peak wavelengths and values between forehead/cheek and palm using t-tests to determine if differences are statistically significant.
 
-# Calculate n for labels
-pv_site_n <- pv_wavelength_long %>%
+```{r peak-valley-distribution-comparison, fig.width=12, fig.height=12}
+# Calculate n for labels (needed for other chunks)
+pv_site_n <- peak_valley_combined %>%
   group_by(site) %>%
-  summarise(n = n_distinct(mi)) %>%
+  summarise(n = n()) %>%
   mutate(label = paste0(site, "\n(n=", n, ")"))
 pv_site_labels <- setNames(pv_site_n$label, pv_site_n$site)
 
-p <- ggplot(pv_wavelength_long, aes(x = wavelength, y = type, fill = type)) +
-  geom_boxplot(alpha = 0.7, outlier.size = 0.8) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  scale_fill_manual(values = c("Valley" = "steelblue", "Peak" = "coral")) +
-  theme_classic() +
-  labs(title = "Distribution of derivative valley and peak wavelengths (500-650 nm)",
-       x = "Wavelength (nm)",
-       y = "",
-       fill = "Type") +
-  theme(legend.position = "none")
+# Create separate datasets for each comparison
+peak_wavelength_data <- peak_valley_combined %>%
+  select(site, mi, peak_wavelength) %>%
+  rename(value = peak_wavelength)
 
-print(p)
-save_pdf(p, "peak_valley_wavelength_distribution.pdf", width = 10, height = 5)
+valley_wavelength_data <- peak_valley_combined %>%
+  select(site, mi, valley_wavelength) %>%
+  rename(value = valley_wavelength)
+
+peak_value_data <- peak_valley_combined %>%
+  select(site, mi, peak_value) %>%
+  rename(value = peak_value)
+
+valley_value_data <- peak_valley_combined %>%
+  select(site, mi, valley_value) %>%
+  rename(value = valley_value)
+
+# Plot peak wavelength: Face vs Palm
+p1 <- ggbetweenstats(
+  data = peak_wavelength_data,
+  x = site,
+  y = value,
+  type = "parametric",
+  pairwise.display = "all",
+  pairwise.annotation = "p.value",
+  p.adjust.method = "none",
+  plot.type = "box",
+  package = "ggsci",
+  palette = "default_jco",
+  centrality.plotting = TRUE,
+  results.subtitle = TRUE,
+  ggplot.component = list(
+    labs(title = "Peak Wavelength: Face vs Palm",
+         x = "",
+         y = "Wavelength (nm)")
+  )
+)
+
+# Plot valley wavelength: Face vs Palm
+p2 <- ggbetweenstats(
+  data = valley_wavelength_data,
+  x = site,
+  y = value,
+  type = "parametric",
+  pairwise.display = "all",
+  pairwise.annotation = "p.value",
+  p.adjust.method = "none",
+  plot.type = "box",
+  package = "ggsci",
+  palette = "default_jco",
+  centrality.plotting = TRUE,
+  results.subtitle = TRUE,
+  ggplot.component = list(
+    labs(title = "Valley Wavelength: Face vs Palm",
+         x = "",
+         y = "Wavelength (nm)")
+  )
+)
+
+# Plot peak value: Face vs Palm
+p3 <- ggbetweenstats(
+  data = peak_value_data,
+  x = site,
+  y = value,
+  type = "parametric",
+  pairwise.display = "all",
+  pairwise.annotation = "p.value",
+  p.adjust.method = "none",
+  plot.type = "box",
+  package = "ggsci",
+  palette = "default_jco",
+  centrality.plotting = TRUE,
+  results.subtitle = TRUE,
+  ggplot.component = list(
+    labs(title = "Peak Value: Face vs Palm",
+         x = "",
+         y = "Derivative value")
+  )
+)
+
+# Plot valley value: Face vs Palm
+p4 <- ggbetweenstats(
+  data = valley_value_data,
+  x = site,
+  y = value,
+  type = "parametric",
+  pairwise.display = "all",
+  pairwise.annotation = "p.value",
+  p.adjust.method = "none",
+  plot.type = "box",
+  package = "ggsci",
+  palette = "default_jco",
+  centrality.plotting = TRUE,
+  results.subtitle = TRUE,
+  ggplot.component = list(
+    labs(title = "Valley Value: Face vs Palm",
+         x = "",
+         y = "Derivative value")
+  )
+)
+
+# Combine all four plots in a 2x2 grid
+p_composite <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2, labels = c("a", "b", "c", "d"))
+print(p_composite)
+save_pdf(p_composite, "peak_valley_distribution_comparison.pdf", width = 12, height = 12)
 ```
+The differences in peak and valley wavelengths and values between face and palm sites are not statistically significant.
 
-### Distribution of valley and peak values
-
-```{r peak-valley-value-distribution, fig.width=10, fig.height=5}
-# Reshape for plotting - Valley first, then Peak
-pv_value_long <- peak_valley_combined %>%
-  pivot_longer(cols = c(valley_value, peak_value),
-               names_to = "type", values_to = "value") %>%
-  mutate(type = ifelse(type == "peak_value", "Peak", "Valley"),
-         type = factor(type, levels = c("Valley", "Peak")))
-
-p <- ggplot(pv_value_long, aes(x = value, y = type, fill = type)) +
-  geom_boxplot(alpha = 0.7, outlier.size = 0.8) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  scale_fill_manual(values = c("Valley" = "steelblue", "Peak" = "coral")) +
-  theme_classic() +
-  labs(title = "Distribution of derivative valley and peak values (500-650 nm)",
-       x = "Derivative value",
-       y = "",
-       fill = "Type") +
-  theme(legend.position = "none")
-
-print(p)
-save_pdf(p, "peak_valley_value_distribution.pdf", width = 10, height = 5)
-```
-
-### Regression: Peak/valley location and value vs melanin index
-
-```{r peak-valley-regression}
-# --- FACE regressions ---
-cat("=== FACE: Peak and Valley vs Melanin Index ===\n\n")
-
-# Peak wavelength vs MI
-cat("Peak wavelength ~ MI:\n")
-reg_face_peak_wl <- lm(peak_wavelength ~ mi, data = face_peak_valley)
-print(summary(reg_face_peak_wl))
-
-# Valley wavelength vs MI
-cat("\nValley wavelength ~ MI:\n")
-reg_face_valley_wl <- lm(valley_wavelength ~ mi, data = face_peak_valley)
-print(summary(reg_face_valley_wl))
-
-# Peak value vs MI
-cat("\nPeak value ~ MI:\n")
-reg_face_peak_val <- lm(peak_value ~ mi, data = face_peak_valley)
-print(summary(reg_face_peak_val))
-
-# Valley value vs MI
-cat("\nValley value ~ MI:\n")
-reg_face_valley_val <- lm(valley_value ~ mi, data = face_peak_valley)
-print(summary(reg_face_valley_val))
-
-# --- PALM regressions ---
-cat("\n\n=== PALM: Peak and Valley vs Melanin Index ===\n\n")
-
-# Peak wavelength vs MI
-cat("Peak wavelength ~ MI:\n")
-reg_palm_peak_wl <- lm(peak_wavelength ~ mi, data = palm_peak_valley)
-print(summary(reg_palm_peak_wl))
-
-# Valley wavelength vs MI
-cat("\nValley wavelength ~ MI:\n")
-reg_palm_valley_wl <- lm(valley_wavelength ~ mi, data = palm_peak_valley)
-print(summary(reg_palm_valley_wl))
-
-# Peak value vs MI
-cat("\nPeak value ~ MI:\n")
-reg_palm_peak_val <- lm(peak_value ~ mi, data = palm_peak_valley)
-print(summary(reg_palm_peak_val))
-
-# Valley value vs MI
-cat("\nValley value ~ MI:\n")
-reg_palm_valley_val <- lm(valley_value ~ mi, data = palm_peak_valley)
-print(summary(reg_palm_valley_val))
-```
-
-### Visualization: Peak/valley wavelength vs melanin index
-
-```{r peak-valley-wavelength-vs-mi, fig.width=12, fig.height=10}
-# Plot peak wavelength vs MI
-p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_wavelength, color = site)) +
-  geom_point(size = 0.8, alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE) +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  theme_classic() +
-  labs(title = "Peak wavelength vs melanin index",
-       x = "Melanin index",
-       y = "Peak wavelength (nm)") +
-  theme(legend.position = "none")
-
-# Plot valley wavelength vs MI
-p2 <- ggplot(peak_valley_combined, aes(x = mi, y = valley_wavelength, color = site)) +
-  geom_point(size = 0.8, alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE) +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  theme_classic() +
-  labs(title = "Valley wavelength vs melanin index",
-       x = "Melanin index",
-       y = "Valley wavelength (nm)") +
-  theme(legend.position = "none")
-
-# Combine plots
-p <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
-print(p)
-save_pdf(p, "peak_valley_wavelength_vs_mi.pdf", width = 12, height = 10)
-```
-
-### Log-transformed: Peak/valley wavelength vs melanin index
-
-Log-transforming both axes tests whether peak and valley wavelength positions follow a power-law relationship with melanin content. Since wavelengths vary little, we expect minimal relationships.
-
-```{r peak-valley-wavelength-vs-mi-log, fig.width=12, fig.height=10}
-# Plot peak wavelength vs MI (log-log)
-p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_wavelength, color = site)) +
-  geom_point(size = 0.8, alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE) +
-  scale_x_log10(breaks = c(20, 30, 50, 100)) +
-  scale_y_log10() +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  theme_classic() +
-  labs(title = "Peak wavelength vs melanin index (log-log)",
-       x = "log(Melanin Index)",
-       y = "log(Peak wavelength (nm))") +
-  theme(legend.position = "none")
-
-# Plot valley wavelength vs MI (log-log)
-p2 <- ggplot(peak_valley_combined, aes(x = mi, y = valley_wavelength, color = site)) +
-  geom_point(size = 0.8, alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE) +
-  scale_x_log10(breaks = c(20, 30, 50, 100)) +
-  scale_y_log10() +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  theme_classic() +
-  labs(title = "Valley wavelength vs melanin index (log-log)",
-       x = "log(Melanin Index)",
-       y = "log(Valley wavelength (nm))") +
-  theme(legend.position = "none")
-
-# Combine plots
-p <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
-print(p)
-save_pdf(p, "peak_valley_wavelength_vs_mi_log.pdf", width = 12, height = 10)
-```
-
-### Visualization: Peak/valley value vs melanin index
-
-```{r peak-valley-value-vs-mi, fig.width=12, fig.height=10}
-# Plot peak value vs MI
-p1 <- ggplot(peak_valley_combined, aes(x = mi, y = peak_value, color = site)) +
-  geom_point(size = 0.8, alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE) +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  theme_classic() +
-  labs(title = "Peak value vs melanin index",
-       x = "Melanin index",
-       y = "Peak derivative value") +
-  theme(legend.position = "none")
-
-# Plot valley value vs MI
-p2 <- ggplot(peak_valley_combined, aes(x = mi, y = valley_value, color = site)) +
-  geom_point(size = 0.8, alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE) +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  theme_classic() +
-  labs(title = "Valley value vs melanin index",
-       x = "Melanin index",
-       y = "Valley derivative value") +
-  theme(legend.position = "none")
-
-# Combine plots
-p <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
-print(p)
-save_pdf(p, "peak_valley_value_vs_mi.pdf", width = 12, height = 10)
-```
-
-### Log-transformed: Peak/valley value vs melanin index
+### Peak/valley value vs melanin index (log-log)
 
 Log-log regression tests whether the amplitude of derivative peak and valley values follow a power-law relationship with melanin content. Note that valley values are negative, so we use absolute values for the log transformation.
 
 ```{r peak-valley-value-vs-mi-log, fig.width=12, fig.height=10}
+# Filter data for positive peak values and negative valley values
+peak_face_pos <- face_peak_valley %>% filter(peak_value > 0)
+peak_palm_pos <- palm_peak_valley %>% filter(peak_value > 0)
+valley_face_neg <- face_peak_valley %>% filter(valley_value < 0)
+valley_palm_neg <- palm_peak_valley %>% filter(valley_value < 0)
+
+# Run log-log regressions for peak value
+reg_face_peak_val <- lm(log(peak_value) ~ log(mi), data = peak_face_pos)
+reg_palm_peak_val <- lm(log(peak_value) ~ log(mi), data = peak_palm_pos)
+face_peak_val_stats <- get_reg_stats(reg_face_peak_val)
+palm_peak_val_stats <- get_reg_stats(reg_palm_peak_val)
+
+print_reg_summary(reg_face_peak_val, "Log-log: log(peak_value) ~ log(mi) - FACE")
+print_reg_summary(reg_palm_peak_val, "Log-log: log(peak_value) ~ log(mi) - PALM")
+
+# Create annotation for peak value plot
+pv_peak_filtered <- peak_valley_combined %>% filter(peak_value > 0)
+annotation_peak_val <- make_facet_annotations(face_peak_val_stats, palm_peak_val_stats,
+                                               x_pos = 90, 
+                                               y_pos = max(pv_peak_filtered$peak_value) * 0.9)
+
 # Plot peak value vs MI (log-log)
-p1 <- ggplot(peak_valley_combined %>% filter(peak_value > 0), 
+p1 <- ggplot(pv_peak_filtered, 
              aes(x = mi, y = peak_value, color = site)) +
   geom_point(size = 0.8, alpha = 0.7) +
   geom_smooth(method = "lm", se = TRUE) +
@@ -1140,15 +1134,31 @@ p1 <- ggplot(peak_valley_combined %>% filter(peak_value > 0),
   scale_y_log10() +
   scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  geom_text(data = annotation_peak_val, aes(x = x, y = y, label = label),
+            hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
   labs(title = "Peak value vs melanin index (log-log)",
        x = "log(Melanin Index)",
        y = "log(Peak derivative value)") +
   theme(legend.position = "none")
 
-# Plot valley value vs MI (log-log) - need to handle negative values
-# Use absolute value for log transformation and note that these are negative
-p2 <- ggplot(peak_valley_combined %>% filter(valley_value < 0), 
+# Run log-log regressions for valley value (absolute value since negative)
+reg_face_valley_val <- lm(log(abs(valley_value)) ~ log(mi), data = valley_face_neg)
+reg_palm_valley_val <- lm(log(abs(valley_value)) ~ log(mi), data = valley_palm_neg)
+face_valley_val_stats <- get_reg_stats(reg_face_valley_val)
+palm_valley_val_stats <- get_reg_stats(reg_palm_valley_val)
+
+print_reg_summary(reg_face_valley_val, "Log-log: log(|valley_value|) ~ log(mi) - FACE")
+print_reg_summary(reg_palm_valley_val, "Log-log: log(|valley_value|) ~ log(mi) - PALM")
+
+# Create annotation for valley value plot
+pv_valley_filtered <- peak_valley_combined %>% filter(valley_value < 0)
+annotation_valley_val <- make_facet_annotations(face_valley_val_stats, palm_valley_val_stats,
+                                                 x_pos = 90, 
+                                                 y_pos = max(abs(pv_valley_filtered$valley_value)) * 0.9)
+
+# Plot valley value vs MI (log-log) - use absolute value
+p2 <- ggplot(pv_valley_filtered, 
              aes(x = mi, y = abs(valley_value), color = site)) +
   geom_point(size = 0.8, alpha = 0.7) +
   geom_smooth(method = "lm", se = TRUE) +
@@ -1156,6 +1166,8 @@ p2 <- ggplot(peak_valley_combined %>% filter(valley_value < 0),
   scale_y_log10() +
   scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
   facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
+  geom_text(data = annotation_valley_val, aes(x = x, y = y, label = label),
+            hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
   labs(title = "Valley value vs melanin index (log-log)",
        x = "log(Melanin Index)",
@@ -1203,39 +1215,11 @@ reg_palm_delta <- lm(delta ~ mi, data = palm_peak_valley)
 print(summary(reg_palm_delta))
 ```
 
-### Visualization: Delta vs melanin index
-
-```{r peak-valley-delta-vs-mi, fig.width=12, fig.height=5}
-# Plot delta vs MI
-p <- ggplot(peak_valley_combined, aes(x = mi, y = delta, color = site)) +
-  geom_point(size = 0.8, alpha = 0.7) +
-  geom_smooth(method = "lm", se = TRUE) +
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(pv_site_labels)) +
-  theme_classic() +
-  labs(title = "Delta (peak - valley) vs melanin index",
-       x = "Melanin index",
-       y = "Delta (peak - valley derivative value)") +
-  theme(legend.position = "none")
-
-print(p)
-save_pdf(p, "peak_valley_delta_vs_mi.pdf", width = 12, height = 5)
-```
-
-### Log-transformed: Delta vs melanin index
+### Delta vs melanin index (log-log)
 
 The delta (peak minus valley) represents the amplitude of the hemoglobin absorption feature in the first derivative. Log-log regression tests whether this amplitude follows a power-law relationship with melanin content.
 
 ```{r peak-valley-delta-vs-mi-log, fig.width=12, fig.height=5}
-# Helper function to format p-values (handles very small values)
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
 # Run log-log regressions for delta
 delta_face <- face_peak_valley %>% filter(delta > 0)
 delta_palm <- palm_peak_valley %>% filter(delta > 0)
@@ -1243,36 +1227,22 @@ delta_palm <- palm_peak_valley %>% filter(delta > 0)
 reg_face_delta_log <- lm(log(delta) ~ log(mi), data = delta_face)
 reg_palm_delta_log <- lm(log(delta) ~ log(mi), data = delta_palm)
 
-# Extract regression stats for annotation
-face_r2 <- summary(reg_face_delta_log)$r.squared
-face_slope <- coef(reg_face_delta_log)[2]
-face_p <- summary(reg_face_delta_log)$coefficients[2, 4]
-
-palm_r2 <- summary(reg_palm_delta_log)$r.squared
-palm_slope <- coef(reg_palm_delta_log)[2]
-palm_p <- summary(reg_palm_delta_log)$coefficients[2, 4]
+# Extract regression stats using helper function
+face_stats <- get_reg_stats(reg_face_delta_log)
+palm_stats <- get_reg_stats(reg_palm_delta_log)
 
 # Print regression summaries
-cat("=== Log-log regression: log(delta) ~ log(mi) ===\n\n")
-cat("FACE:\n")
-print(summary(reg_face_delta_log))
-cat("\n\nPALM:\n")
-print(summary(reg_palm_delta_log))
+print_reg_summary(reg_face_delta_log, "Log-log regression: log(delta) ~ log(mi) - FACE")
+print_reg_summary(reg_palm_delta_log, "Log-log regression: log(delta) ~ log(mi) - PALM")
 
-# Create annotation data with actual coordinates
+# Create annotation data using helper function
 pv_delta_filtered <- peak_valley_combined %>% filter(delta > 0)
-annotation_delta <- data.frame(
-  site = c("Forehead/Cheek", "Palm"),
-  label = c(
-    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
-    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
-  ),
-  x = 90,
-  y = max(pv_delta_filtered$delta) * 0.9
-)
+annotation_delta <- make_facet_annotations(face_stats, palm_stats, 
+                                            x_pos = 90, 
+                                            y_pos = max(pv_delta_filtered$delta) * 0.9)
 
-# Plot delta vs MI (log-log)
-p <- ggplot(pv_delta_filtered, 
+# Plot delta vs MI (log-log) - store as p1 for composite
+p1 <- ggplot(pv_delta_filtered, 
             aes(x = mi, y = delta, color = site)) +
   geom_point(size = 0.8, alpha = 0.7) +
   geom_smooth(method = "lm", se = TRUE) +
@@ -1287,73 +1257,29 @@ p <- ggplot(pv_delta_filtered,
        x = "log(Melanin Index)",
        y = "log(Delta (peak - valley))") +
   theme(legend.position = "none")
-
-print(p)
-save_pdf(p, "peak_valley_delta_vs_mi_log.pdf", width = 12, height = 5)
 ```
 
-## Correlation between absorbance derivative sd and melanin index
-
-```{r plot-derivative-sd-mi-abs, fig.width=10, fig.height=5}
-p <- ggplot(data = sd_combined, aes(x = log_mi, y = sd_abs, color = site)) + 
-  geom_point(size = 0.8, alpha = 0.7) + 
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(sd_site_labels)) +
-  theme_classic() +
-  labs(title = "Correlation between absorbance derivative sd and melanin index",
-       x = "log(Melanin index)",
-       y = "Standard deviation of derivatives") + 
-  ylim(0, 0.0055) + xlim(2.75, 4.75) +
-  theme(legend.position = "none")
-
-print(p)
-save_pdf(p, "absorbance_mi_sd.pdf", width = 10, height = 5)
-```
-
-### Log-transformed: Derivative SD vs melanin index (absorbance)
+## Absorbance derivative SD vs melanin index (log-log)
 
 This log-log regression tests for a power-law relationship between absorbance derivative variability and melanin content.
 
 ```{r plot-derivative-sd-mi-abs-log, fig.width=10, fig.height=5}
-# Helper function to format p-values (handles very small values)
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
 # Run log-log regressions for absorbance SD
 reg_face_abs_log <- lm(log(sd_abs) ~ log(mi), data = sd_face)
 reg_palm_abs_log <- lm(log(sd_abs) ~ log(mi), data = sd_palm)
 
-# Extract regression stats for annotation
-face_r2 <- summary(reg_face_abs_log)$r.squared
-face_slope <- coef(reg_face_abs_log)[2]
-face_p <- summary(reg_face_abs_log)$coefficients[2, 4]
-
-palm_r2 <- summary(reg_palm_abs_log)$r.squared
-palm_slope <- coef(reg_palm_abs_log)[2]
-palm_p <- summary(reg_palm_abs_log)$coefficients[2, 4]
+# Extract regression stats using helper function
+face_stats <- get_reg_stats(reg_face_abs_log)
+palm_stats <- get_reg_stats(reg_palm_abs_log)
 
 # Print regression summaries
-cat("=== Log-log regression: log(sd_abs) ~ log(mi) ===\n\n")
-cat("FACE:\n")
-print(summary(reg_face_abs_log))
-cat("\n\nPALM:\n")
-print(summary(reg_palm_abs_log))
+print_reg_summary(reg_face_abs_log, "Log-log regression: log(sd_abs) ~ log(mi) - FACE")
+print_reg_summary(reg_palm_abs_log, "Log-log regression: log(sd_abs) ~ log(mi) - PALM")
 
-# Create annotation data with actual coordinates
-annotation_abs <- data.frame(
-  site = c("Forehead/Cheek", "Palm"),
-  label = c(
-    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
-    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
-  ),
-  x = 90,
-  y = max(sd_combined$sd_abs) * 0.9
-)
+# Create annotation data using helper function
+annotation_abs <- make_facet_annotations(face_stats, palm_stats, 
+                                          x_pos = 90, 
+                                          y_pos = max(sd_combined$sd_abs) * 0.9)
 
 p <- ggplot(data = sd_combined, aes(x = mi, y = sd_abs, color = site)) + 
   geom_point(size = 0.8, alpha = 0.7) + 
@@ -1374,7 +1300,7 @@ print(p)
 save_pdf(p, "absorbance_mi_sd_log.pdf", width = 10, height = 5)
 ```
 
-## Reflectance delta (680 nm - 555 nm) vs melanin index
+## Delta (680 nm - 555 nm) vs melanin index
 
 The erythema index is based on the ratio of reflectance at 680 nm to the average reflectance at 550-560 nm (approximating 555 nm). Here we examine the raw reflectance difference (delta) between these wavelengths as a function of melanin index.
 
@@ -1391,9 +1317,10 @@ palm_spectrum <- palm_spectrum %>%
 
 # Combine for faceted plot
 ref_delta_combined <- bind_rows(
-  face_spectrum %>% select(site, mi, ref_delta, R680, R555_approx),
-  palm_spectrum %>% select(site, mi, ref_delta, R680, R555_approx)
-)
+  face_spectrum %>% select(site, mi, ref_delta, R680, R555_approx, C),
+  palm_spectrum %>% select(site, mi, ref_delta, R680, R555_approx, C)
+) %>%
+  rename(id = C)
 
 # Calculate n for each site
 ref_delta_site_n <- ref_delta_combined %>%
@@ -1403,7 +1330,7 @@ ref_delta_site_n <- ref_delta_combined %>%
 ref_delta_site_labels <- setNames(ref_delta_site_n$label, ref_delta_site_n$site)
 
 # Summary statistics
-cat("=== Reflectance delta (R680 - R555_approx) summary ===\n\n")
+cat("=== Delta (R680 - R555_approx) summary ===\n\n")
 ref_delta_combined %>%
   group_by(site) %>%
   summarise(
@@ -1417,41 +1344,21 @@ ref_delta_combined %>%
   print()
 ```
 
-### Visualization: Reflectance delta vs melanin index
+### Delta R680-R555 vs melanin index
 
-```{r reflectance-delta-vs-mi, fig.width=10, fig.height=5, out.width="50%"}
-# Helper function to format p-values (handles very small values)
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
+```{r reflectance-delta-vs-mi, fig.width=10, fig.height=5}
 # Run linear regressions for annotation
 reg_face_lin <- lm(ref_delta ~ mi, data = face_spectrum)
 reg_palm_lin <- lm(ref_delta ~ mi, data = palm_spectrum)
 
-# Extract regression stats
-face_r2_lin <- summary(reg_face_lin)$r.squared
-face_slope_lin <- coef(reg_face_lin)[2]
-face_p_lin <- summary(reg_face_lin)$coefficients[2, 4]
+# Extract regression stats using helper function
+face_stats <- get_reg_stats(reg_face_lin)
+palm_stats <- get_reg_stats(reg_palm_lin)
 
-palm_r2_lin <- summary(reg_palm_lin)$r.squared
-palm_slope_lin <- coef(reg_palm_lin)[2]
-palm_p_lin <- summary(reg_palm_lin)$coefficients[2, 4]
-
-# Create annotation data
-annotation_ref_lin <- data.frame(
-  site = c("Forehead/Cheek", "Palm"),
-  label = c(
-    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope_lin, face_r2_lin, format_pval(face_p_lin)),
-    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope_lin, palm_r2_lin, format_pval(palm_p_lin))
-  ),
-  x = 100,
-  y = max(ref_delta_combined$ref_delta) * 0.95
-)
+# Create annotation data using helper function
+annotation_ref_lin <- make_facet_annotations(face_stats, palm_stats, 
+                                              x_pos = 100, 
+                                              y_pos = max(ref_delta_combined$ref_delta) * 0.95)
 
 p <- ggplot(ref_delta_combined, aes(x = mi, y = ref_delta, color = site)) +
   geom_point(size = 0.8, alpha = 0.7) +
@@ -1461,29 +1368,20 @@ p <- ggplot(ref_delta_combined, aes(x = mi, y = ref_delta, color = site)) +
   geom_text(data = annotation_ref_lin, aes(x = x, y = y, label = label),
             hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
-  labs(title = "Reflectance delta (R680 - R555) vs melanin index",
+  labs(title = "Delta (R680 - R555) vs melanin index",
        x = "Melanin index",
-       y = "Reflectance delta (R680 - R555)") +
+       y = "Delta (R680 - R555)") +
   theme(legend.position = "none")
 
 print(p)
 save_pdf(p, "reflectance_delta_vs_mi.pdf", width = 10, height = 5)
 ```
 
-### Log-transformed: Reflectance delta vs melanin index
+### Log-transformed: Delta R680-R555 vs melanin index
 
 Log-log regression tests whether the reflectance difference between 680 nm and ~555 nm follows a power-law relationship with melanin content. Note: only positive delta values can be log-transformed.
 
-```{r reflectance-delta-vs-mi-log, fig.width=10, fig.height=5, out.width="50%"}
-# Helper function to format p-values (handles very small values)
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
+```{r reflectance-delta-vs-mi-log, fig.width=10, fig.height=6}
 # Filter for positive deltas only (required for log transform)
 delta_face_pos <- face_spectrum %>% filter(ref_delta > 0)
 delta_palm_pos <- palm_spectrum %>% filter(ref_delta > 0)
@@ -1495,37 +1393,23 @@ cat("Palm: ", nrow(delta_palm_pos), " of ", nrow(palm_spectrum), " have positive
 reg_face_delta <- lm(log(ref_delta) ~ log(mi), data = delta_face_pos)
 reg_palm_delta <- lm(log(ref_delta) ~ log(mi), data = delta_palm_pos)
 
-# Extract regression stats
-face_r2 <- summary(reg_face_delta)$r.squared
-face_slope <- coef(reg_face_delta)[2]
-face_p <- summary(reg_face_delta)$coefficients[2, 4]
-
-palm_r2 <- summary(reg_palm_delta)$r.squared
-palm_slope <- coef(reg_palm_delta)[2]
-palm_p <- summary(reg_palm_delta)$coefficients[2, 4]
+# Extract regression stats using helper function
+face_stats <- get_reg_stats(reg_face_delta)
+palm_stats <- get_reg_stats(reg_palm_delta)
 
 # Print regression summaries
-cat("\n=== Log-log regression: log(ref_delta) ~ log(mi) ===\n\n")
-cat("FACE:\n")
-print(summary(reg_face_delta))
-cat("\n\nPALM:\n")
-print(summary(reg_palm_delta))
+print_reg_summary(reg_face_delta, "Log-log regression: log(ref_delta) ~ log(mi) - FACE")
+print_reg_summary(reg_palm_delta, "Log-log regression: log(ref_delta) ~ log(mi) - PALM")
 
 # Filter combined data for plotting
 ref_delta_filtered <- ref_delta_combined %>% filter(ref_delta > 0)
 
-# Create annotation data
-annotation_ref_delta <- data.frame(
-  site = c("Forehead/Cheek", "Palm"),
-  label = c(
-    sprintf("slope = %.2f\nR² = %.3f\n%s", face_slope, face_r2, format_pval(face_p)),
-    sprintf("slope = %.2f\nR² = %.3f\n%s", palm_slope, palm_r2, format_pval(palm_p))
-  ),
-  x = 90,
-  y = max(ref_delta_filtered$ref_delta) * 0.9
-)
+# Create annotation data using helper function
+annotation_ref_delta <- make_facet_annotations(face_stats, palm_stats, 
+                                                x_pos = 90, 
+                                                y_pos = max(ref_delta_filtered$ref_delta) * 0.9)
 
-p <- ggplot(ref_delta_filtered, aes(x = mi, y = ref_delta, color = site)) +
+p2 <- ggplot(ref_delta_filtered, aes(x = mi, y = ref_delta, color = site)) +
   geom_point(size = 0.8, alpha = 0.7) +
   geom_smooth(method = "lm", se = TRUE) +
   scale_x_log10(breaks = c(20, 30, 50, 100)) +
@@ -1535,220 +1419,209 @@ p <- ggplot(ref_delta_filtered, aes(x = mi, y = ref_delta, color = site)) +
   geom_text(data = annotation_ref_delta, aes(x = x, y = y, label = label),
             hjust = 1, vjust = 1, size = 3, color = "black", inherit.aes = FALSE) +
   theme_classic() +
-  labs(title = "Reflectance delta (R680 - R555) vs melanin index (log-log)",
+  labs(title = "Delta (R680 - R555) vs melanin index (log-log)",
        x = "log(Melanin Index)",
-       y = "log(Reflectance delta)") +
+       y = "log(Delta (R680 - R555))") +
   theme(legend.position = "none")
 
-print(p)
-save_pdf(p, "reflectance_delta_vs_mi_log.pdf", width = 10, height = 5)
+# Combine with peak-valley delta plot from previous chunk
+p_composite <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
+print(p_composite)
+save_pdf(p_composite, "delta_comparison_log.pdf", width = 10, height = 6)
 ```
 
-## Correlation between erythema index and melanin index by site
+### Mixed-effects models: Testing body site differences
 
-```{r ei-mi-correlation, fig.width=10, fig.height=5}
-# Combine face and palm spectra
-ei_mi_combined = bind_rows(
-  face_spectrum %>% select(site, mi, ei),
-  palm_spectrum %>% select(site, mi, ei)
-)
+We use mixed-effects models to test whether the relationship between melanin index and delta values differs by body site, accounting for repeated measures within individuals.
 
-# Calculate n for each site
-ei_mi_site_n <- ei_mi_combined %>%
-  group_by(site) %>%
-  summarise(n = n()) %>%
-  mutate(label = paste0(site, "\n(n=", n, ")"))
-ei_mi_site_labels <- setNames(ei_mi_site_n$label, ei_mi_site_n$site)
+We tested whether anatomical site (forehead/cheek vs palm) modifies the log–log relationship between melanin index (MI) and (i) peak–valley derivative delta and (ii) reflectance delta (R680–R555), using linear mixed-effects models with a random intercept for subject. For each outcome, we compared a main-effects model (log_delta ~ log_mi + bodysite) to an interaction model (log_delta ~ log_mi * bodysite). A significant likelihood ratio test (LRT) indicates site-specific scaling (different slopes).
 
-p <- ggplot(data = ei_mi_combined, aes(x = mi, y = ei, color = site)) + 
-  geom_point(size = 0.8, alpha = 0.7) + 
-  scale_color_manual(values = c("Forehead/Cheek" = "pink", "Palm" = "steelblue")) +
-  facet_wrap(~site, nrow = 1, labeller = as_labeller(ei_mi_site_labels)) +
-  theme_classic() +
-  labs(title = "Correlation between erythema index and melanin index",
-       x = "Melanin index",
-       y = "Erythema index") + 
-  xlim(0, 120) + ylim(10, 55) +
-  theme(legend.position = "none")
+```{r delta-mixed-effects-models}
+library(lme4)
 
-print(p)
-save_pdf(p, "ei_mi_correlation.pdf", width = 10, height = 5)
-```
-
-### Face erythema index vs face melanin index
-
-```{r faceei-facemi-correlation, fig.width=5, fig.height=5, out.width="50%"}
-# Helper function to format p-values
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
+# Helper function to report likelihood ratio test results
+report_lrt <- function(m0, m1, outcome_label) {
+  lrt <- anova(m0, m1)
+  # second row is the interaction model
+  chi2 <- lrt$Chisq[2]
+  df   <- lrt$`Df`[2]
+  p    <- lrt$`Pr(>Chisq)`[2]
+  cat(sprintf("%s: LRT comparing interaction vs main-effects model: χ²(%d) = %.2f, %s\n\n",
+              outcome_label, df, chi2, format_pval(p)))
 }
 
-# Run linear regression
+# === PEAK-VALLEY DELTA MODELS ===
+cat("=== Peak-Valley Delta: Testing body site effect ===\n\n")
+
+# Filter positive deltas for log transformation
+pv_delta_data <- peak_valley_combined %>% 
+  filter(delta > 0) %>%
+  mutate(log_delta = log(delta),
+         log_mi = log(mi),
+         bodysite = site)
+
+# Model 0: Main effects only (log_delta ~ log_mi + bodysite)
+m0_pv <- lmer(
+  log_delta ~ log_mi + bodysite + (1 | id),
+  data = pv_delta_data
+)
+
+# Model 1: Interaction effect (log_delta ~ log_mi * bodysite)
+m1_pv <- lmer(
+  log_delta ~ log_mi * bodysite + (1 | id),
+  data = pv_delta_data
+)
+
+# Report likelihood ratio test
+report_lrt(m0_pv, m1_pv, "Peak–valley derivative Δ")
+
+# === REFLECTANCE DELTA (R680-R555) MODELS ===
+cat("=== Reflectance Delta (R680-R555): Testing body site effect ===\n\n")
+
+# Filter positive deltas for log transformation
+ref_delta_data <- ref_delta_combined %>% 
+  filter(ref_delta > 0) %>%
+  mutate(log_delta = log(ref_delta),
+         log_mi = log(mi),
+         bodysite = site)
+
+# Model 0: Main effects only
+m0_ref <- lmer(
+  log_delta ~ log_mi + bodysite + (1 | id),
+  data = ref_delta_data
+)
+
+# Model 1: Interaction effect
+m1_ref <- lmer(
+  log_delta ~ log_mi * bodysite + (1 | id),
+  data = ref_delta_data
+)
+
+# Report likelihood ratio test
+report_lrt(m0_ref, m1_ref, "Reflectance Δ (R680–R555)")
+```
+
+Anatomical site significantly modified the MI–Δ relationship for both peak–valley derivative Δ and reflectance Δ (LRT comparing interaction vs main-effects models; see output above), indicating site-specific scaling rather than a simple constant offset.
+
+```{r delta-predicted-lines, fig.width=8, fig.height=4}
+library(ggeffects)
+
+# Peak–valley delta predicted lines
+pred_pv <- ggpredict(m1_pv, terms = c("log_mi [all]", "bodysite"))
+p_pv <- plot(pred_pv) +
+  labs(title = "Predicted log(Δ) vs log(MI) by anatomical site",
+       x = "log(Melanin Index)", y = "Predicted log(Peak–valley Δ)")
+print(p_pv)
+save_pdf(p_pv, "predicted_lines_peakvalley_delta.pdf", width = 8, height = 4)
+
+# Reflectance delta predicted lines
+pred_ref <- ggpredict(m1_ref, terms = c("log_mi [all]", "bodysite"))
+p_ref <- plot(pred_ref) +
+  labs(title = "Predicted log(Δ) vs log(MI) by anatomical site",
+       x = "log(Melanin Index)", y = "Predicted log(R680–R555 Δ)")
+print(p_ref)
+save_pdf(p_ref, "predicted_lines_reflectance_delta.pdf", width = 8, height = 4)
+```
+
+## Face erythema index vs face melanin index: Linear vs Log-log comparison
+
+Comparing linear and log-log regressions to test which model better fits the relationship between face erythema index and face melanin content.
+
+```{r faceei-facemi-comparison, fig.width=10, fig.height=5}
+# === LINEAR REGRESSION ===
 reg_face_ei_lin <- lm(ei ~ mi, data = face_spectrum)
+face_ei_stats_lin <- get_reg_stats(reg_face_ei_lin)
+print_reg_summary(reg_face_ei_lin, "Linear regression: face_ei ~ face_mi")
 
-# Extract regression stats
-face_ei_r2_lin <- summary(reg_face_ei_lin)$r.squared
-face_ei_slope_lin <- coef(reg_face_ei_lin)[2]
-face_ei_p_lin <- summary(reg_face_ei_lin)$coefficients[2, 4]
+annotation_face_ei_lin <- make_annotation_label(face_ei_stats_lin, slope_digits = 3)
 
-# Print regression summary
-cat("=== Linear regression: face_ei ~ face_mi ===\n")
-print(summary(reg_face_ei_lin))
-
-# Create annotation
-annotation_face_ei_lin <- sprintf("slope = %.3f\nR² = %.3f\n%s", face_ei_slope_lin, face_ei_r2_lin, format_pval(face_ei_p_lin))
-
-p <- ggplot(data = face_spectrum, aes(x = mi, y = ei)) + 
+p1 <- ggplot(data = face_spectrum, aes(x = mi, y = ei)) + 
   geom_point(color = "pink", size = 0.8, alpha = 0.7) + 
   geom_smooth(method = "lm", se = TRUE, color = "darkred") +
   annotate("text", x = 110, y = 52, label = annotation_face_ei_lin,
            hjust = 1, vjust = 1, size = 3, color = "black") +
   theme_classic() +
-  labs(title = paste0("Face EI vs Face MI (n=", nrow(face_spectrum), ")"),
+  labs(title = paste0("Face EI vs Face MI - Linear (n=", nrow(face_spectrum), ")"),
        x = "Face Melanin index",
        y = "Face Erythema index") + 
   xlim(0, 120) + ylim(10, 55)
 
-print(p)
-save_pdf(p, "face_ei_face_mi_correlation.pdf", width = 5, height = 5)
-```
+# === LOG-LOG REGRESSION ===
+face_data_filtered <- face_spectrum %>% filter(ei > 0, mi > 0)
+reg_face_ei_log <- lm(log(ei) ~ log(mi), data = face_data_filtered)
+face_ei_stats_log <- get_reg_stats(reg_face_ei_log)
+print_reg_summary(reg_face_ei_log, "Log-log regression: log(face_ei) ~ log(face_mi)")
 
-### Log-transformed: Face erythema index vs face melanin index
+annotation_face_ei_log <- make_annotation_label(face_ei_stats_log)
 
-Log-log regression tests whether face erythema index follows a power-law relationship with face melanin content.
-
-```{r faceei-facemi-log, fig.width=5, fig.height=5, out.width="50%"}
-# Helper function to format p-values (handles very small values)
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
-# Run log-log regression
-reg_face_ei <- lm(log(ei) ~ log(mi), data = face_spectrum %>% filter(ei > 0, mi > 0))
-
-# Extract regression stats
-face_ei_r2 <- summary(reg_face_ei)$r.squared
-face_ei_slope <- coef(reg_face_ei)[2]
-face_ei_p <- summary(reg_face_ei)$coefficients[2, 4]
-
-# Print regression summary
-cat("=== Log-log regression: log(face_ei) ~ log(face_mi) ===\n")
-print(summary(reg_face_ei))
-
-# Create annotation
-annotation_face_ei <- sprintf("slope = %.2f\nR² = %.3f\n%s", face_ei_slope, face_ei_r2, format_pval(face_ei_p))
-
-p <- ggplot(data = face_spectrum %>% filter(ei > 0, mi > 0), aes(x = mi, y = ei)) + 
+p2 <- ggplot(data = face_data_filtered, aes(x = mi, y = ei)) + 
   geom_point(color = "pink", size = 0.8, alpha = 0.7) + 
   geom_smooth(method = "lm", se = TRUE, color = "darkred") +
   scale_x_log10(breaks = c(20, 30, 50, 100)) +
   scale_y_log10() +
-  annotate("text", x = 90, y = max(face_spectrum$ei) * 0.9, label = annotation_face_ei,
+  annotate("text", x = 90, y = max(face_spectrum$ei) * 0.9, label = annotation_face_ei_log,
            hjust = 1, vjust = 1, size = 3, color = "black") +
   theme_classic() +
-  labs(title = paste0("Face EI vs Face MI (log-log, n=", nrow(face_spectrum), ")"),
+  labs(title = paste0("Face EI vs Face MI - Log-log (n=", nrow(face_data_filtered), ")"),
        x = "log(Face Melanin index)",
        y = "log(Face Erythema index)")
 
+# Combine plots side by side
+p <- ggarrange(p1, p2, ncol = 2, nrow = 1, labels = c("a", "b"))
 print(p)
-save_pdf(p, "face_ei_face_mi_log.pdf", width = 5, height = 5)
+save_pdf(p, "face_ei_face_mi_comparison.pdf", width = 10, height = 5)
 ```
 
-### Palm erythema index vs face melanin index
+## Palm erythema index vs face melanin index: Linear vs Log-log comparison
 
-```{r palmei-facemi-correlation, fig.width=5, fig.height=5, out.width="50%"}
+Comparing linear and log-log regressions to test which model better fits the relationship between palm erythema index and face melanin content. This cross-site comparison may reveal systemic hemoglobin patterns.
+
+```{r palmei-facemi-comparison, fig.width=10, fig.height=5}
+# Ensure face_mi is set for palm_spectrum
 palm_spectrum$face_mi = face_spectrum$mi[match(palm_spectrum$C, face_spectrum$C)]
 
-# Helper function to format p-values
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
-# Run linear regression
+# === LINEAR REGRESSION ===
 reg_palm_ei_lin <- lm(ei ~ face_mi, data = palm_spectrum)
+palm_ei_stats_lin <- get_reg_stats(reg_palm_ei_lin)
+print_reg_summary(reg_palm_ei_lin, "Linear regression: palm_ei ~ face_mi")
 
-# Extract regression stats
-palm_ei_r2_lin <- summary(reg_palm_ei_lin)$r.squared
-palm_ei_slope_lin <- coef(reg_palm_ei_lin)[2]
-palm_ei_p_lin <- summary(reg_palm_ei_lin)$coefficients[2, 4]
+annotation_palm_ei_lin <- make_annotation_label(palm_ei_stats_lin, slope_digits = 3)
 
-# Print regression summary
-cat("=== Linear regression: palm_ei ~ face_mi ===\n")
-print(summary(reg_palm_ei_lin))
-
-# Create annotation
-annotation_palm_ei_lin <- sprintf("slope = %.3f\nR² = %.3f\n%s", palm_ei_slope_lin, palm_ei_r2_lin, format_pval(palm_ei_p_lin))
-
-p <- ggplot(data = palm_spectrum, aes(x = face_mi, y = ei)) + 
+p1 <- ggplot(data = palm_spectrum, aes(x = face_mi, y = ei)) + 
   geom_point(color = "steelblue", size = 0.8, alpha = 0.7) + 
   geom_smooth(method = "lm", se = TRUE, color = "darkblue") +
   annotate("text", x = 110, y = 52, label = annotation_palm_ei_lin,
            hjust = 1, vjust = 1, size = 3, color = "black") +
   theme_classic() +
-  labs(title = paste0("Palm EI vs Face MI (n=", nrow(palm_spectrum), ")"),
+  labs(title = paste0("Palm EI vs Face MI - Linear (n=", nrow(palm_spectrum), ")"),
        x = "Face Melanin index",
        y = "Palm Erythema index") + 
   xlim(0, 120) + ylim(10, 55)
 
-print(p)
-save_pdf(p, "palm_ei_face_mi_correlation.pdf", width = 5, height = 5)
-```
+# === LOG-LOG REGRESSION ===
+palm_data_filtered <- palm_spectrum %>% filter(ei > 0, face_mi > 0)
+reg_palm_ei_log <- lm(log(ei) ~ log(face_mi), data = palm_data_filtered)
+palm_ei_stats_log <- get_reg_stats(reg_palm_ei_log)
+print_reg_summary(reg_palm_ei_log, "Log-log regression: log(palm_ei) ~ log(face_mi)")
 
-### Log-transformed: Palm erythema index vs face melanin index
+annotation_palm_ei_log <- make_annotation_label(palm_ei_stats_log)
 
-Log-log regression tests whether palm erythema index follows a power-law relationship with face melanin content. This cross-site comparison may reveal systemic hemoglobin patterns independent of local melanin.
-
-```{r palmei-facemi-log, fig.width=5, fig.height=5, out.width="50%"}
-# Helper function to format p-values
-format_pval <- function(p) {
-  if (p < 2.2e-16) {
-    return("p < 2.2e-16")
-  } else {
-    return(sprintf("p = %.2e", p))
-  }
-}
-
-# Run log-log regression
-reg_palm_ei <- lm(log(ei) ~ log(face_mi), data = palm_spectrum %>% filter(ei > 0, face_mi > 0))
-
-# Extract regression stats
-palm_ei_r2 <- summary(reg_palm_ei)$r.squared
-palm_ei_slope <- coef(reg_palm_ei)[2]
-palm_ei_p <- summary(reg_palm_ei)$coefficients[2, 4]
-
-# Print regression summary
-cat("=== Log-log regression: log(palm_ei) ~ log(face_mi) ===\n")
-print(summary(reg_palm_ei))
-
-# Create annotation
-annotation_palm_ei <- sprintf("slope = %.2f\nR² = %.3f\n%s", palm_ei_slope, palm_ei_r2, format_pval(palm_ei_p))
-
-p <- ggplot(data = palm_spectrum %>% filter(ei > 0, face_mi > 0), aes(x = face_mi, y = ei)) + 
+p2 <- ggplot(data = palm_data_filtered, aes(x = face_mi, y = ei)) + 
   geom_point(color = "steelblue", size = 0.8, alpha = 0.7) + 
   geom_smooth(method = "lm", se = TRUE, color = "darkblue") +
   scale_x_log10(breaks = c(20, 30, 50, 100)) +
   scale_y_log10() +
-  annotate("text", x = 90, y = max(palm_spectrum$ei) * 0.9, label = annotation_palm_ei,
+  annotate("text", x = 90, y = max(palm_spectrum$ei) * 0.9, label = annotation_palm_ei_log,
            hjust = 1, vjust = 1, size = 3, color = "black") +
   theme_classic() +
-  labs(title = paste0("Palm EI vs Face MI (log-log, n=", nrow(palm_spectrum), ")"),
+  labs(title = paste0("Palm EI vs Face MI - Log-log (n=", nrow(palm_data_filtered), ")"),
        x = "log(Face Melanin index)",
        y = "log(Palm Erythema index)")
 
+# Combine plots side by side
+p <- ggarrange(p1, p2, ncol = 2, nrow = 1, labels = c("a", "b"))
 print(p)
-save_pdf(p, "palm_ei_face_mi_log.pdf", width = 5, height = 5)
+save_pdf(p, "palm_ei_face_mi_comparison.pdf", width = 10, height = 5)
 ```
 
 ## Correlation between erythema index variability and melanin index by site

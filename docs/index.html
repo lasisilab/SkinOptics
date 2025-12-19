@@ -13,7 +13,7 @@
 
 <title>Home</title>
 
-<script src="site_libs/header-attrs-2.30/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -284,7 +284,7 @@ $(document).ready(function () {
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
 <span class="glyphicon glyphicon-list" aria-hidden="true"></span>
-workflowr <span class="glyphicon glyphicon-ok text-success"
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
 aria-hidden="true"></span>
 </button>
 </p>
@@ -295,8 +295,8 @@ aria-hidden="true"></span>
 </li>
 <li>
 <a data-toggle="tab" href="#checks"> Checks <span
-class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
-</a>
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
 </li>
 <li>
 <a data-toggle="tab" href="#versions">Past versions</a>
@@ -305,13 +305,13 @@ class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2025-12-11
+<strong>Last updated:</strong> 2025-12-18
 </p>
 <p>
 <strong>Checks:</strong> <span
-class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 2
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 1
 <span class="glyphicon glyphicon-exclamation-sign text-danger"
-aria-hidden="true"></span> 0
+aria-hidden="true"></span> 1
 </p>
 <p>
 <strong>Knit directory:</strong> <code>SkinOptics/</code> <span
@@ -323,7 +323,7 @@ title="This is the local directory in which the code in this file was executed."
 This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
 analysis was created with <a
   href="https://github.com/workflowr/workflowr">workflowr</a> (version
-1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+1.7.1). The <em>Checks</em> tab describes the reproducibility checks
 that were applied when the results were created. The <em>Past
 versions</em> tab lists the development history.
 </p>
@@ -334,33 +334,36 @@ versions</em> tab lists the development history.
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
-<span class="glyphicon glyphicon-ok text-success"
-aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
-</a>
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
 </p>
 </div>
-<div id="strongRMarkdownfilestronguptodate"
+<div id="strongRMarkdownfilestronguncommittedchanges"
 class="panel-collapse collapse">
 <div class="panel-body">
-<p>Great! Since the R Markdown file has been committed to the Git
-repository, you know the exact version of the code that produced these
-results.</p>
+<p>The R Markdown file has unstaged changes. To know which version of
+the R Markdown file created these results, you’ll want to first commit
+it to the Git repo. If you’re still working on the analysis, you can
+ignore this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
 </div>
 </div>
 </div>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreef9242483a8269c007f638b250a98827cd570a4adtargetblankf924248a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree777c6d5d15ccf2894d1b84d407161fe240b30950targetblank777c6d5a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/lasisilab/SkinOptics/tree/f9242483a8269c007f638b250a98827cd570a4ad" target="_blank">f924248</a>
+<a href="https://github.com/lasisilab/SkinOptics/tree/777c6d5d15ccf2894d1b84d407161fe240b30950" target="_blank">777c6d5</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreef9242483a8269c007f638b250a98827cd570a4adtargetblankf924248a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree777c6d5d15ccf2894d1b84d407161fe240b30950targetblank777c6d5a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -370,7 +373,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/lasisilab/SkinOptics/tree/f9242483a8269c007f638b250a98827cd570a4ad" target="_blank">f924248</a>.
+<a href="https://github.com/lasisilab/SkinOptics/tree/777c6d5d15ccf2894d1b84d407161fe240b30950" target="_blank">777c6d5</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -385,9 +388,60 @@ were generated:
 </p>
 <pre><code>
 Ignored files:
-    Ignored:    .RData
-    Ignored:    .Rhistory
-    Ignored:    .Rproj.user/
+    Ignored:    .DS_Store
+
+Untracked files:
+    Untracked:  output/delta_comparison_log.pdf
+    Untracked:  output/face_ei_face_mi_comparison.pdf
+    Untracked:  output/mi_distribution.png
+    Untracked:  output/palm_ei_face_mi_comparison.pdf
+    Untracked:  output/peak_valley_distribution_comparison.pdf
+    Untracked:  output/peak_valley_distribution_composite.pdf
+    Untracked:  output/predicted_lines_peakvalley_delta.pdf
+    Untracked:  output/predicted_lines_reflectance_delta.pdf
+
+Unstaged changes:
+    Modified:   analysis/JID_SkinOptics.Rmd
+    Modified:   analysis/index.Rmd
+    Deleted:    analysis/skin-map.Rmd
+    Deleted:    output/README.md
+    Modified:   output/absorbance_derivative_face.pdf
+    Modified:   output/absorbance_derivative_palm.pdf
+    Modified:   output/absorbance_derivative_palm_face.pdf
+    Deleted:    output/absorbance_mi_sd.pdf
+    Modified:   output/absorbance_mi_sd_log.pdf
+    Modified:   output/composite_reflectance_derivatives.pdf
+    Deleted:    output/ei_mi_correlation.pdf
+    Modified:   output/ei_sd_mi_correlation.pdf
+    Deleted:    output/face_ei_face_mi_correlation.pdf
+    Deleted:    output/face_ei_face_mi_log.pdf
+    Deleted:    output/facepalm_ei_mi_correlation.pdf
+    Modified:   output/heatmap.pdf
+    Modified:   output/mi_distribution.pdf
+    Deleted:    output/palm_ei_face_mi_correlation.pdf
+    Deleted:    output/palm_ei_face_mi_log.pdf
+    Modified:   output/palm_ei_face_mi_sd_correlation.pdf
+    Deleted:    output/peak_valley_delta_vs_mi.pdf
+    Modified:   output/peak_valley_delta_vs_mi_log.pdf
+    Deleted:    output/peak_valley_scatter.pdf
+    Modified:   output/peak_valley_value_distribution.pdf
+    Deleted:    output/peak_valley_value_vs_mi.pdf
+    Modified:   output/peak_valley_value_vs_mi_log.pdf
+    Modified:   output/peak_valley_wavelength_distribution.pdf
+    Deleted:    output/peak_valley_wavelength_vs_mi.pdf
+    Modified:   output/peak_valley_wavelength_vs_mi_log.pdf
+    Modified:   output/reflectance_delta_vs_mi.pdf
+    Modified:   output/reflectance_delta_vs_mi_log.pdf
+    Modified:   output/reflectance_derivative_face.pdf
+    Modified:   output/reflectance_derivative_palm.pdf
+    Modified:   output/reflectance_derivative_palm_face.pdf
+    Deleted:    output/reflectance_derivative_palmface.pdf
+    Modified:   output/reflectance_face.pdf
+    Deleted:    output/reflectance_mi_sd.pdf
+    Modified:   output/reflectance_mi_sd_log.pdf
+    Deleted:    output/reflectance_mi_sd_regression.pdf
+    Modified:   output/reflectance_palm.pdf
+    Modified:   output/reflectance_palm_face.pdf
 
 </code></pre>
 <p>
@@ -436,6 +490,23 @@ Message
 html
 </td>
 <td>
+<a href="https://rawcdn.githack.com/lasisilab/SkinOptics/32c3e8f1f160ac93ffe91d4a5af83e756298032a/docs/index.html" target="_blank">32c3e8f</a>
+</td>
+<td>
+Junhui He
+</td>
+<td>
+2025-12-11
+</td>
+<td>
+Rebuild site to apply navbar layout
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
 <a href="https://rawcdn.githack.com/lasisilab/SkinOptics/81580b559815c98bbc6381b066ffa1a50be20352/docs/index.html" target="_blank">81580b5</a>
 </td>
 <td>
@@ -472,7 +543,32 @@ create SkinOptics
 </div>
 </div>
 </div>
-<p>Welcome to my research website.</p>
+<p>Welcome to the SkinOptics research website.</p>
+<div id="analyses" class="section level2">
+<h2>Analyses</h2>
+<div id="skin-optics-analysis-using-issa-data" class="section level3">
+<h3>Skin Optics Analysis using ISSA Data</h3>
+<p><a
+href="JID_SkinOptics.html"><strong>JID_SkinOptics.html</strong></a> -
+Comprehensive analysis of skin optical properties using the
+International Skin Spectrum Archive (ISSA) dataset. This analysis
+examines:</p>
+<ul>
+<li>Melanin index (MI) and erythema index (EI) distributions across body
+sites</li>
+<li>First derivative spectral analysis for hemoglobin absorption
+features</li>
+<li>Peak-valley characteristics in derivative spectra</li>
+<li>Body site comparisons (forehead/cheek vs palm) using mixed-effects
+models</li>
+<li>Power-law relationships between melanin content and hemoglobin
+signal attenuation</li>
+</ul>
+<p>The analysis includes publication-quality visualizations and
+statistical tests exploring how melanin affects the detection of
+hemoglobin in skin reflectance spectra.</p>
+</div>
+</div>
 </div>
 </div>
 </div>
