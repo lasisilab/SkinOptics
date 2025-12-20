@@ -11,7 +11,7 @@ editor_options:
 
 ### Skin Optics Analysis using ISSA Data
 
-[**JID_SkinOptics.html**](JID_SkinOptics.html) - Comprehensive analysis of skin optical properties using the International Skin Spectrum Archive (ISSA) dataset. This analysis examines:
+[**Main Skin Optics Analysis**](JID_SkinOptics.html) - Comprehensive analysis of skin optical properties using the International Skin Spectrum Archive (ISSA) dataset. This analysis examines:
 
 - Melanin index (MI) and erythema index (EI) distributions across body sites
 - First derivative spectral analysis for hemoglobin absorption features

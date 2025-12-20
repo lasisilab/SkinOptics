@@ -681,8 +681,7 @@ p_raw_palm_face <- PlotReflectance(palm_spectrum) +
     color = "Face melanin index"
   ) + 
   ylim(0, 75) +
-  theme(legend.position = "bottom",
-        axis.title.x = element_blank())
+  theme(legend.position = "bottom")
 
 print(p_raw_palm_face)
 save_pdf(p_raw_palm_face, "reflectance_palm_face.pdf", width = 12, height = 4)
@@ -709,7 +708,8 @@ p_deriv_face <- PlotDerivative(drv_facer_df) +
     color = "Face melanin index"
   ) + 
   ylim(-0.6, 0.8) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank())
 
 print(p_deriv_face)
 save_pdf(p_deriv_face, "reflectance_derivative_face.pdf", width = 12, height = 4)
@@ -772,6 +772,7 @@ save_pdf(p_deriv_palm_face, "reflectance_derivative_palm_face.pdf", width = 12, 
 composite_plot <- ggarrange(
   p_raw_face, p_deriv_face, p_raw_palm_face, p_deriv_palm_face,
   labels = c("a", "b", "c", "d"),
+  font.label = list(size = 15),
   ncol = 2, nrow = 2,
   common.legend = TRUE,
   legend = "bottom",
