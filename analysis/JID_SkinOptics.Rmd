@@ -631,8 +631,7 @@ p_raw_face <- PlotReflectance(face_spectrum) +
     color = "Face melanin index"
   ) + 
   ylim(0, 75) +
-  theme(legend.position = "bottom",
-        axis.title.x = element_blank())
+  theme(legend.position = "bottom")
 
 print(p_raw_face)
 save_pdf(p_raw_face, "reflectance_face.pdf", width = 12, height = 4)
@@ -708,8 +707,7 @@ p_deriv_face <- PlotDerivative(drv_facer_df) +
     color = "Face melanin index"
   ) + 
   ylim(-0.6, 0.8) +
-  theme(legend.position = "bottom",
-        axis.title.x = element_blank())
+  theme(legend.position = "bottom")
 
 print(p_deriv_face)
 save_pdf(p_deriv_face, "reflectance_derivative_face.pdf", width = 12, height = 4)
@@ -767,20 +765,20 @@ save_pdf(p_deriv_palm_face, "reflectance_derivative_palm_face.pdf", width = 12, 
 
 ## Composite figure: face reflectance and derivatives by eumelanin class
 
-```{r composite-reflectance-derivatives, fig.width=18, fig.height=6}
+```{r composite-reflectance-derivatives, fig.width=12, fig.height=14}
 # Combine the four plots into a composite figure
 composite_plot <- ggarrange(
   p_raw_face, p_deriv_face, p_raw_palm_face, p_deriv_palm_face,
   labels = c("a", "b", "c", "d"),
   font.label = list(size = 15),
-  ncol = 2, nrow = 2,
+  ncol = 1, nrow = 4,
   common.legend = TRUE,
   legend = "bottom",
   align = "hv"
 )
 
 print(composite_plot)
-save_pdf(composite_plot, "composite_reflectance_derivatives.pdf", width = 18, height = 7)
+save_pdf(composite_plot, "composite_reflectance_derivatives.pdf", width = 12, height = 14)
 ```
 
 ## First derivatives of absorbance by eumelanin class
@@ -1382,7 +1380,7 @@ save_pdf(p, "reflectance_delta_vs_mi.pdf", width = 10, height = 5)
 
 Log-log regression tests whether the reflectance difference between 680 nm and ~555 nm follows a power-law relationship with melanin content. Note: only positive delta values can be log-transformed.
 
-```{r reflectance-delta-vs-mi-log, fig.width=10, fig.height=6}
+```{r reflectance-delta-vs-mi-log, fig.width=10, fig.height=10}
 # Filter for positive deltas only (required for log transform)
 delta_face_pos <- face_spectrum %>% filter(ref_delta > 0)
 delta_palm_pos <- palm_spectrum %>% filter(ref_delta > 0)
@@ -1428,7 +1426,7 @@ p2 <- ggplot(ref_delta_filtered, aes(x = mi, y = ref_delta, color = site)) +
 # Combine with peak-valley delta plot from previous chunk
 p_composite <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
 print(p_composite)
-save_pdf(p_composite, "delta_comparison_log.pdf", width = 10, height = 6)
+save_pdf(p_composite, "delta_comparison_log.pdf", width = 10, height = 10)
 ```
 
 ### Mixed-effects models: Testing body site differences
