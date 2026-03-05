@@ -11,7 +11,7 @@
 
 <meta name="author" content="Junhui He and Tina Lasisi" />
 
-<meta name="date" content="2025-12-22" />
+<meta name="date" content="2026-03-04" />
 
 <title>Skin Optics Analysis based on ISSA Data</title>
 
@@ -357,7 +357,7 @@ div.tocify {
 <h1 class="title toc-ignore">Skin Optics Analysis based on ISSA
 Data</h1>
 <h4 class="author">Junhui He and Tina Lasisi</h4>
-<h4 class="date">2025-12-22</h4>
+<h4 class="date">2026-03-04</h4>
 
 </div>
 
@@ -386,7 +386,7 @@ aria-hidden="true"></span> </a>
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2025-12-22
+<strong>Last updated:</strong> 2026-03-04
 </p>
 <p>
 <strong>Checks:</strong> <span
@@ -531,15 +531,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreeb77728f9b91cbdb6864cdb8713bd3becbb0ee524targetblankb77728fa">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree93e1d826d53755e915eb0ee30b5143493d5fbde0targetblank93e1d82a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/lasisilab/SkinOptics/tree/b77728f9b91cbdb6864cdb8713bd3becbb0ee524" target="_blank">b77728f</a>
+<a href="https://github.com/lasisilab/SkinOptics/tree/93e1d826d53755e915eb0ee30b5143493d5fbde0" target="_blank">93e1d82</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstreeb77728f9b91cbdb6864cdb8713bd3becbb0ee524targetblankb77728fa"
+id="strongRepositoryversionstrongahrefhttpsgithubcomlasisilabSkinOpticstree93e1d826d53755e915eb0ee30b5143493d5fbde0targetblank93e1d82a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -549,7 +549,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/lasisilab/SkinOptics/tree/b77728f9b91cbdb6864cdb8713bd3becbb0ee524" target="_blank">b77728f</a>.
+<a href="https://github.com/lasisilab/SkinOptics/tree/93e1d826d53755e915eb0ee30b5143493d5fbde0" target="_blank">93e1d82</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -565,6 +565,11 @@ were generated:
 <pre><code>
 Ignored files:
     Ignored:    .DS_Store
+    Ignored:    .claude/
+
+Untracked files:
+    Untracked:  output/paired_face_palm_mi.pdf
+    Untracked:  output/palm_mi_by_face_class.pdf
 
 Unstaged changes:
     Modified:   analysis/JID_SkinOptics.Rmd
@@ -636,6 +641,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/93e1d826d53755e915eb0ee30b5143493d5fbde0/analysis/JID_SkinOptics.Rmd" target="_blank">93e1d82</a>
+</td>
+<td>
+tinalasisi
+</td>
+<td>
+2025-12-22
+</td>
+<td>
+Update figures
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/lasisilab/SkinOptics/93e1d826d53755e915eb0ee30b5143493d5fbde0/docs/JID_SkinOptics.html" target="_blank">93e1d82</a>
+</td>
+<td>
+tinalasisi
+</td>
+<td>
+2025-12-22
+</td>
+<td>
+Update figures
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -1353,6 +1392,129 @@ Junhui He
 </tbody>
 </table>
 </div>
+<div id="paired-face-palm-melanin-index-comparison"
+class="section level2">
+<h2>Paired face-palm melanin index comparison</h2>
+<p>As a reminder, face eumelanin classes are defined as: Low (MI &lt;
+25), Intermediate low (25 <span class="math inline">\(\leq\)</span> MI
+&lt; 50), Intermediate (50 <span class="math inline">\(\leq\)</span> MI
+&lt; 75), Intermediate high (75 <span
+class="math inline">\(\leq\)</span> MI &lt; 100), and High (MI <span
+class="math inline">\(\geq\)</span> 100).</p>
+<pre><code>Paired face-palm observations: 776 </code></pre>
+<table>
+<caption>Palm melanin index summary by face eumelanin class</caption>
+<colgroup>
+<col width="15%" />
+<col width="2%" />
+<col width="9%" />
+<col width="8%" />
+<col width="9%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="14%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Face eumelanin class</th>
+<th align="right">n</th>
+<th align="right">Face MI mean</th>
+<th align="right">Face MI SD</th>
+<th align="right">Palm MI mean</th>
+<th align="right">Palm MI SD</th>
+<th align="right">Palm MI min</th>
+<th align="right">Palm MI max</th>
+<th align="right">Face-Palm diff mean</th>
+<th align="right">Face-Palm diff SD</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Low</td>
+<td align="right">34</td>
+<td align="right">23.5</td>
+<td align="right">0.9</td>
+<td align="right">24.1</td>
+<td align="right">2.8</td>
+<td align="right">20.5</td>
+<td align="right">32.7</td>
+<td align="right">-0.6</td>
+<td align="right">2.7</td>
+</tr>
+<tr class="even">
+<td align="left">Intermediate low</td>
+<td align="right">663</td>
+<td align="right">34.3</td>
+<td align="right">5.2</td>
+<td align="right">32.0</td>
+<td align="right">6.4</td>
+<td align="right">18.7</td>
+<td align="right">63.6</td>
+<td align="right">2.3</td>
+<td align="right">6.4</td>
+</tr>
+<tr class="odd">
+<td align="left">Intermediate</td>
+<td align="right">54</td>
+<td align="right">63.3</td>
+<td align="right">7.8</td>
+<td align="right">41.3</td>
+<td align="right">8.3</td>
+<td align="right">22.8</td>
+<td align="right">69.5</td>
+<td align="right">22.0</td>
+<td align="right">8.2</td>
+</tr>
+<tr class="even">
+<td align="left">Intermediate high</td>
+<td align="right">22</td>
+<td align="right">84.6</td>
+<td align="right">5.7</td>
+<td align="right">48.8</td>
+<td align="right">10.3</td>
+<td align="right">33.8</td>
+<td align="right">77.4</td>
+<td align="right">35.8</td>
+<td align="right">10.3</td>
+</tr>
+<tr class="odd">
+<td align="left">High</td>
+<td align="right">3</td>
+<td align="right">104.4</td>
+<td align="right">5.1</td>
+<td align="right">46.8</td>
+<td align="right">7.0</td>
+<td align="right">42.0</td>
+<td align="right">54.9</td>
+<td align="right">57.6</td>
+<td align="right">11.2</td>
+</tr>
+</tbody>
+</table>
+<pre><code>=== Semi-log regression: palm_mi ~ log(face_mi) === 
+
+Call:
+lm(formula = palm_mi ~ log(face_mi), data = paired_mi)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-17.7691  -3.6932  -0.5856   3.2416  30.0910 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  -29.7069     2.7948  -10.63   &lt;2e-16 ***
+log(face_mi)  17.4702     0.7782   22.45   &lt;2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 6.053 on 774 degrees of freedom
+Multiple R-squared:  0.3944,    Adjusted R-squared:  0.3936 
+F-statistic:   504 on 1 and 774 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p><img src="figure/JID_SkinOptics.Rmd/paired-face-palm-mi-plot-1.png" width="70%" style="display: block; margin: auto;" /></p>
+<p><img src="figure/JID_SkinOptics.Rmd/paired-face-palm-mi-boxplot-1.png" width="70%" style="display: block; margin: auto;" /></p>
+</div>
 <div id="reflectance-by-eumelanin-class" class="section level2">
 <h2>Reflectance by eumelanin class</h2>
 <div id="face-reflectance-by-face-eumelanin-class"
@@ -1381,6 +1543,17 @@ Date
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/93e1d826d53755e915eb0ee30b5143493d5fbde0/docs/figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-face-1.png" target="_blank">93e1d82</a>
+</td>
+<td>
+tinalasisi
+</td>
+<td>
+2025-12-22
+</td>
+</tr>
 <tr>
 <td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/40b4375b87bbb5bba7d71b8997dc355f72d032ff/docs/figure/JID_SkinOptics.Rmd/plot-raw-reflectance-by-class-face-1.png" target="_blank">40b4375</a>
@@ -1589,6 +1762,17 @@ Date
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/93e1d826d53755e915eb0ee30b5143493d5fbde0/docs/figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-face-1.png" target="_blank">93e1d82</a>
+</td>
+<td>
+tinalasisi
+</td>
+<td>
+2025-12-22
+</td>
+</tr>
 <tr>
 <td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/b77728f9b91cbdb6864cdb8713bd3becbb0ee524/docs/figure/JID_SkinOptics.Rmd/plot-reflectance-by-class-face-1.png" target="_blank">b77728f</a>
@@ -1817,6 +2001,17 @@ Date
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/93e1d826d53755e915eb0ee30b5143493d5fbde0/docs/figure/JID_SkinOptics.Rmd/composite-reflectance-derivatives-1.png" target="_blank">93e1d82</a>
+</td>
+<td>
+tinalasisi
+</td>
+<td>
+2025-12-22
+</td>
+</tr>
 <tr>
 <td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/b77728f9b91cbdb6864cdb8713bd3becbb0ee524/docs/figure/JID_SkinOptics.Rmd/composite-reflectance-derivatives-1.png" target="_blank">b77728f</a>
@@ -2737,6 +2932,17 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/lasisilab/SkinOptics/blob/93e1d826d53755e915eb0ee30b5143493d5fbde0/docs/figure/JID_SkinOptics.Rmd/reflectance-delta-vs-mi-log-1.png" target="_blank">93e1d82</a>
+</td>
+<td>
+tinalasisi
+</td>
+<td>
+2025-12-22
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/lasisilab/SkinOptics/blob/f046c110e0fe1fa904b625ad94738892332029db/docs/figure/JID_SkinOptics.Rmd/reflectance-delta-vs-mi-log-1.png" target="_blank">f046c11</a>
 </td>
 <td>
@@ -3180,14 +3386,14 @@ Session information
 <div id="workflowr-sessioninfo" class="collapse">
 <pre><code>R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Tahoe 26.2
+Running under: macOS Tahoe 26.3
 
 Matrix products: default
 BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
-[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+[1] en_US/en_US/en_US/C/en_US/en_US
 
 time zone: America/Detroit
 tzcode source: internal
@@ -3201,16 +3407,16 @@ other attached packages:
  [7] here_1.0.1          KernSmooth_2.23-26  openxlsx_4.2.8.1   
 [10] scales_1.4.0        lubridate_1.9.4     forcats_1.0.0      
 [13] stringr_1.5.1       dplyr_1.1.4         purrr_1.2.0        
-[16] readr_2.1.5         tidyr_1.3.1         tibble_3.2.1       
+[16] readr_2.1.5         tidyr_1.3.1         tibble_3.3.1       
 [19] ggplot2_4.0.1       tidyverse_2.0.0     knitr_1.50         
 
 loaded via a namespace (and not attached):
   [1] Rdpack_2.6.4           pbapply_1.7-4          gridExtra_2.3         
-  [4] rematch2_2.1.2         rlang_1.1.6            magrittr_2.0.4        
+  [4] rematch2_2.1.2         rlang_1.1.7            magrittr_2.0.4        
   [7] git2r_0.36.2           furrr_0.3.1            compiler_4.5.2        
  [10] statsExpressions_1.7.1 mgcv_1.9-3             systemfonts_1.3.1     
- [13] vctrs_0.6.5            pkgconfig_2.0.3        fastmap_1.2.0         
- [16] backports_1.5.0        labeling_0.4.3         utf8_1.2.5            
+ [13] vctrs_0.7.1            pkgconfig_2.0.3        fastmap_1.2.0         
+ [16] backports_1.5.0        labeling_0.4.3         utf8_1.2.6            
  [19] effectsize_1.0.1       promises_1.3.3         rmarkdown_2.29        
  [22] tzdb_0.5.0             haven_2.5.5            nloptr_2.2.1          
  [25] ragg_1.4.0             MatrixModels_0.5-4     xfun_0.54             
@@ -3218,14 +3424,14 @@ loaded via a namespace (and not attached):
  [31] broom_1.0.8            parallel_4.5.2         R6_2.6.1              
  [34] bslib_0.9.0            stringi_1.8.7          RColorBrewer_1.1-3    
  [37] parallelly_1.45.0      car_3.1-3              boot_1.3-32           
- [40] jquerylib_0.1.4        Rcpp_1.1.0             parameters_0.28.3     
+ [40] jquerylib_0.1.4        Rcpp_1.1.1             parameters_0.28.3     
  [43] correlation_0.8.8      httpuv_1.6.16          splines_4.5.2         
  [46] timechange_0.3.0       tidyselect_1.2.1       dichromat_2.0-0.1     
  [49] abind_1.4-8            yaml_2.3.10            codetools_0.2-20      
  [52] listenv_0.9.1          lattice_0.22-7         withr_3.0.2           
  [55] bayestestR_0.17.0      S7_0.2.0               coda_0.19-4.1         
  [58] evaluate_1.0.3         future_1.58.0          RcppParallel_5.1.11-1 
- [61] zip_2.3.3              pillar_1.10.2          carData_3.0-5         
+ [61] zip_2.3.3              pillar_1.11.1          carData_3.0-5         
  [64] whisker_0.4.1          reformulas_0.4.1       insight_1.4.4         
  [67] generics_0.1.4         rprojroot_2.0.4        paletteer_1.6.0       
  [70] hms_1.1.3              rstantools_2.5.0       minqa_1.2.8           
@@ -3237,7 +3443,7 @@ loaded via a namespace (and not attached):
  [88] workflowr_1.7.1        viridisLite_0.4.2      gtable_0.3.6          
  [91] rstatix_0.7.2          zeallot_0.2.0          sass_0.4.10           
  [94] digest_0.6.37          prismatic_1.1.2        ggrepel_0.9.6         
- [97] farver_2.1.2           htmltools_0.5.8.1      lifecycle_1.0.4       
+ [97] farver_2.1.2           htmltools_0.5.8.1      lifecycle_1.0.5       
 [100] BayesFactor_0.9.12-4.7 MASS_7.3-65           </code></pre>
 </div>
 </div>

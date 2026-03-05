@@ -610,6 +610,90 @@ kable(table(eumelanin_class_face), col.names = c("Eumelanin class", "Number of s
 kable(table(eumelanin_class_palm), col.names = c("Eumelanin class", "Number of subjects"), caption = "Number of subjects in each eumelanin class (Palm)")
 ```
 
+## Paired face-palm melanin index comparison
+
+As a reminder, face eumelanin classes are defined as: Low (MI < 25), Intermediate low (25 $\leq$ MI < 50), Intermediate (50 $\leq$ MI < 75), Intermediate high (75 $\leq$ MI < 100), and High (MI $\geq$ 100).
+
+```{r paired-face-palm-mi, fig.width=8, fig.height=5}
+# Match face MI to palm data
+paired_mi <- palm_spectrum %>%
+  select(C, palm_mi = mi) %>%
+  inner_join(face_spectrum %>% select(C, face_mi = mi, face_class = class), by = "C")
+
+cat("Paired face-palm observations:", nrow(paired_mi), "\n\n")
+
+# Summary table: palm MI statistics by face eumelanin class
+paired_summary <- paired_mi %>%
+  group_by(face_class) %>%
+  summarise(
+    n = n(),
+    face_mi_mean = mean(face_mi),
+    face_mi_sd = sd(face_mi),
+    palm_mi_mean = mean(palm_mi),
+    palm_mi_sd = sd(palm_mi),
+    palm_mi_min = min(palm_mi),
+    palm_mi_max = max(palm_mi),
+    mi_diff_mean = mean(face_mi - palm_mi),
+    mi_diff_sd = sd(face_mi - palm_mi),
+    .groups = "drop"
+  )
+
+kable(paired_summary, digits = 1,
+      col.names = c("Face eumelanin class", "n",
+                     "Face MI mean", "Face MI SD",
+                     "Palm MI mean", "Palm MI SD",
+                     "Palm MI min", "Palm MI max",
+                     "Face-Palm diff mean", "Face-Palm diff SD"),
+      caption = "Palm melanin index summary by face eumelanin class")
+```
+
+```{r paired-face-palm-mi-plot, fig.width=6, fig.height=5, out.width="70%"}
+# Scatter plot of face MI vs palm MI (stored for composite figure later)
+mi_range <- range(c(paired_mi$face_mi, paired_mi$palm_mi))
+
+# Run semi-log regression: palm_mi ~ log(face_mi)
+reg_face_palm <- lm(palm_mi ~ log(face_mi), data = paired_mi)
+fp_stats <- get_reg_stats(reg_face_palm)
+print_reg_summary(reg_face_palm, "Semi-log regression: palm_mi ~ log(face_mi)")
+fp_annotation <- make_annotation_label(fp_stats)
+
+p_face_palm <- ggplot(paired_mi, aes(x = face_mi, y = palm_mi, color = face_class)) +
+  geom_point(alpha = 0.5, size = 1) +
+  geom_smooth(method = "lm", formula = y ~ log(x), se = TRUE, color = "black") +
+  scale_x_log10() +
+  ylim(mi_range) +
+  annotate("text", x = max(mi_range) * 0.95, y = max(mi_range) * 0.9,
+           label = fp_annotation, hjust = 1, vjust = 1, size = 3) +
+  labs(x = "log(Face melanin index)", y = "Palm melanin index",
+       color = "Face eumelanin class",
+       title = "Paired face vs. palm melanin index (semi-log)") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+print(p_face_palm)
+save_pdf(p_face_palm, "paired_face_palm_mi.pdf", width = 6, height = 5)
+```
+
+```{r paired-face-palm-mi-boxplot, fig.width=8, fig.height=5, out.width="70%"}
+# Box plot of palm MI distribution by face eumelanin class
+palm_class_n <- paired_mi %>%
+  group_by(face_class) %>%
+  summarise(n = n()) %>%
+  mutate(label = paste0(face_class, "\n(n=", n, ")"))
+palm_class_labels <- setNames(palm_class_n$label, palm_class_n$face_class)
+
+p_boxplot <- ggplot(paired_mi, aes(x = face_class, y = palm_mi, fill = face_class)) +
+  geom_boxplot(alpha = 0.7, outlier.alpha = 0.3) +
+  scale_x_discrete(labels = palm_class_labels) +
+  labs(x = "Face eumelanin class", y = "Palm melanin index",
+       title = "Palm MI by face eumelanin class") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+print(p_boxplot)
+save_pdf(p_boxplot, "palm_mi_by_face_class.pdf", width = 8, height = 5)
+```
+
 ## Reflectance by eumelanin class
 
 ### Face reflectance by face eumelanin class
@@ -1423,10 +1507,15 @@ p2 <- ggplot(ref_delta_filtered, aes(x = mi, y = ref_delta, color = site)) +
        y = "log(Delta (R680 - R555))") +
   theme(legend.position = "none")
 
-# Combine with peak-valley delta plot from previous chunk
-p_composite <- ggarrange(p1, p2, ncol = 1, nrow = 2, labels = c("a", "b"))
+# Top row: scatter (a) + boxplot (b) side by side, aligned
+# Boxplot first (a) so colors/classes are introduced, then scatter (b) without legend
+p_top <- ggarrange(p_boxplot, p_face_palm, ncol = 2, nrow = 1,
+                    labels = c("a", "b"), align = "h")
+# Stack: top row, then c and d vertically
+p_composite <- ggarrange(p_top, p1, p2, ncol = 1, nrow = 3,
+                          labels = c("", "c", "d"))
 print(p_composite)
-save_pdf(p_composite, "delta_comparison_log.pdf", width = 10, height = 10)
+save_pdf(p_composite, "delta_comparison_log.pdf", width = 11, height = 12)
 ```
 
 ### Mixed-effects models: Testing body site differences
