@@ -1,0 +1,226 @@
+---
+title: "JID SPF — representative facial spectra by melanin-index class"
+author: "Tina Lasisi"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(openxlsx)
+library(here)
+library(patchwork)
+library(colorSpec)
+library(spacesXYZ)
+library(spacesRGB)
+
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE,
+  fig.retina = 2, fig.width = 13, fig.height = 3.6, out.width = "100%"
+)
+OUTPUT_DIR <- here::here("output")
+```
+
+```{r load_and_compute}
+# --- Load ISSA workbook (same convention as JID_SkinOptics.Rmd) ---
+issa_path <- here::here("data", "ISSA_17_Jan_2025_Yan_Lu.xlsx")
+issa_data <- read.xlsx(issa_path, sheet = 2)
+issa <- issa_data[10:nrow(issa_data), ]
+colnames(issa) <- issa_data[9, ]
+
+body_names <- c("Back of Hand", "Cheek", "Cheek bone", "Chin", "Ear Lobe",
+                "Forehead", "Inner arm", "Neck", "Nose tip", "Outer arm",
+                "Palm", "Ring finger")
+issa$G <- body_names[as.numeric(issa$G)]
+
+# Reflectance, absorbance, melanin index (MI = 100 * A680)
+wavelengths <- seq(400, 700, by = 10)
+reflectance <- issa %>% dplyr::select(`400`:`700`) %>% mutate(across(everything(), as.numeric))
+colnames(reflectance) <- paste0("R", wavelengths)
+absorbance <- as.data.frame(lapply(reflectance, function(R) -log10(R / 100)))
+colnames(absorbance) <- paste0("A", wavelengths)
+spectrum <- cbind(issa %>% dplyr::select(A, C, G), reflectance, absorbance) %>%
+  mutate(mi = 100 * A680)
+colnames(spectrum)[3] <- "site"
+
+# One representative facial spectrum per subject (Forehead preferred over Cheek)
+face_spectrum <- spectrum %>%
+  filter(site %in% c("Forehead", "Cheek")) %>%
+  mutate(site_priority = if_else(site == "Forehead", 1, 2)) %>%
+  arrange(C, site_priority, A) %>%
+  group_by(C) %>% slice(1) %>% ungroup() %>%
+  select(-site_priority)
+```
+
+```{r color_setup}
+# --- Reflectance spectrum -> perceived skin color --------------------------
+# Standard pipeline via colorSpec (spectral -> XYZ) + spacesXYZ / spacesRGB
+# (XYZ -> CIELAB / sRGB), instead of hand-coded color-matching functions.
+cmf_wl <- seq(400, 700, by = 10)   # our reflectance grid
+
+# Responder = CIE D65 illuminant x CIE 1931 2-deg observer, on the 10 nm grid.
+# The 2-deg observer is used because sRGB is formally defined against it, so the
+# spectrum -> XYZ -> sRGB swatch path is internally consistent.
+D65_eye <- colorSpec::product(colorSpec::D65.1nm, "material",
+                              colorSpec::xyz1931.1nm, wavelength = cmf_wl)
+# Global scale so a perfect diffuser yields Y = 100 (preserves D65 chromaticity)
+xyz_scale <- 100 / as.numeric(colorSpec::product(
+  colorSpec::neutralMaterial(1, wavelength = cmf_wl), D65_eye,
+  wavelength = cmf_wl))[2]
+# D65 reference white for CIELAB, computed for this observer
+D65_white <- as.numeric(colorSpec::product(
+  colorSpec::neutralMaterial(1, wavelength = cmf_wl), D65_eye,
+  wavelength = cmf_wl)) * xyz_scale
+
+# Reflectance (%) sampled on cmf_wl -> CIE XYZ (Y = 100 for a perfect diffuser)
+spectrum_to_XYZ <- function(R_percent) {
+  sp <- colorSpec::colorSpec(R_percent / 100, wavelength = cmf_wl,
+                             quantity = "reflectance")
+  as.numeric(colorSpec::product(sp, D65_eye, wavelength = cmf_wl)) * xyz_scale
+}
+
+# XYZ -> sRGB hex (clamped to gamut)
+spectrum_to_hex <- function(R_percent) {
+  v <- spacesRGB::RGBfromXYZ(matrix(spectrum_to_XYZ(R_percent) / 100, nrow = 1),
+                             space = "sRGB")$RGB
+  v <- pmin(pmax(v, 0), 1)
+  grDevices::rgb(v[1], v[2], v[3])
+}
+
+# XYZ -> CIELAB (D65 reference white)
+spectrum_to_lab <- function(R_percent) {
+  setNames(as.numeric(spacesXYZ::LabfromXYZ(spectrum_to_XYZ(R_percent),
+                                            white = D65_white)),
+           c("L", "a", "b"))
+}
+```
+
+```{r representative_spectra, fig.width=10, fig.height=3.5, fig.cap="Representative facial reflectance spectra chosen to span the observed melanin-index range with clear color contrast: the lightest and darkest subjects in the sample as endpoints, plus the nearest real subject to MI ≈ 45, 65, and 85 for the middle (the reflectance curve, derivative, and color swatch all come from the same individual). Top swatch = the perceived skin color for that spectrum (CIE D65 / 1931 2° observer → sRGB). Middle = full 400–700 nm reflectance curve; bottom = its first derivative dR/dλ. y-axes are held constant across classes so magnitudes are comparable. Shaded band = 500–650 nm hemoglobin-feature region."}
+mi_labels <- c("Low", "Intermediate low", "Intermediate", "Intermediate high", "High")
+pal <- c("Low" = "#0072B2", "Intermediate low" = "#009E73", "Intermediate" = "#E69F00",
+         "Intermediate high" = "#D55E00", "High" = "#7F3C8D")
+
+# Representatives chosen to span the observed range with clear color contrast:
+# the lightest and darkest real subjects in the sample as endpoints, plus the
+# nearest real subject to MI ~= 45, 65, 85 for the middle (no averaging).
+# Curve, derivative, and swatch below all derive from the SAME chosen subject.
+mi_targets <- c(min(face_spectrum$mi), 45, 65, 85, max(face_spectrum$mi))
+rep_spectrum <- purrr::map_dfr(seq_along(mi_targets), function(i) {
+  face_spectrum %>%
+    slice_min(abs(mi - mi_targets[i]), n = 1, with_ties = FALSE) %>%
+    mutate(eumelanin_class = mi_labels[i])
+}) %>%
+  mutate(eumelanin_class = factor(eumelanin_class, levels = mi_labels))
+
+# Perceived color (sRGB hex + CIELAB) computed from the FULL spectrum 400-700 nm
+Rmat <- as.matrix(rep_spectrum[, paste0("R", cmf_wl)])
+rep_spectrum$hex <- apply(Rmat, 1, spectrum_to_hex)
+lab <- t(apply(Rmat, 1, spectrum_to_lab))
+rep_spectrum$L <- lab[, "L"]; rep_spectrum$a <- lab[, "a"]; rep_spectrum$b_ <- lab[, "b"]
+
+# Full-spectrum long form (no wavelength filtering — show the entire curve)
+rep_long <- rep_spectrum %>%
+  select(C, eumelanin_class, mi, matches("^R[0-9]+$")) %>%
+  pivot_longer(matches("^R[0-9]+$"), names_to = "wavelength", values_to = "reflectance") %>%
+  mutate(wavelength = as.numeric(str_remove(wavelength, "R"))) %>%
+  arrange(eumelanin_class, wavelength)
+
+# First derivative dR/dλ (central difference; evenly spaced 10 nm grid)
+deriv_long <- rep_long %>%
+  group_by(eumelanin_class) %>%
+  mutate(deriv = (lead(reflectance) - lag(reflectance)) /
+                 (lead(wavelength)  - lag(wavelength))) %>%
+  ungroup()
+
+# Shared (fixed) y-limits across all panels
+refl_ylim  <- range(rep_long$reflectance, na.rm = TRUE)
+deriv_ylim <- range(deriv_long$deriv, na.rm = TRUE)
+classes    <- mi_labels[mi_labels %in% rep_spectrum$eumelanin_class]
+
+build_col <- function(cls, show_y) {
+  rl  <- filter(rep_long,   eumelanin_class == cls)
+  dl  <- filter(deriv_long, eumelanin_class == cls)
+  row <- rep_spectrum[rep_spectrum$eumelanin_class == cls, ]
+  col_line <- pal[[cls]]
+
+  swatch <- ggplot(data.frame(x = 1, y = 1)) +
+    geom_tile(aes(x, y), fill = row$hex) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    labs(title = cls, subtitle = paste0("MI ", round(row$mi))) +
+    theme_void(base_size = 11) +
+    theme(plot.title    = element_text(face = "bold", hjust = 0.5, size = 11),
+          plot.subtitle = element_text(hjust = 0.5, size = 11, color = "grey30"),
+          plot.margin   = margin(2, 2, 2, 2))
+
+  refl <- ggplot(rl, aes(wavelength, reflectance)) +
+    annotate("rect", xmin = 500, xmax = 650, ymin = -Inf, ymax = Inf,
+             fill = "#fcf8ea", alpha = 0.7) +
+    geom_line(color = col_line, linewidth = 1) +
+    scale_x_continuous(limits = c(400, 700), breaks = seq(400, 700, 100)) +
+    scale_y_continuous(limits = refl_ylim) +
+    labs(x = NULL, y = if (show_y) "Reflectance (%)" else NULL) +
+    theme_minimal(base_size = 11) +
+    theme(panel.grid.minor = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = if (show_y) element_text() else element_blank())
+
+  deriv <- ggplot(dl, aes(wavelength, deriv)) +
+    annotate("rect", xmin = 500, xmax = 650, ymin = -Inf, ymax = Inf,
+             fill = "#fcf8ea", alpha = 0.7) +
+    geom_hline(yintercept = 0, color = "grey70", linewidth = 0.3) +
+    geom_line(color = col_line, linewidth = 0.8) +
+    scale_x_continuous(limits = c(400, 700), breaks = seq(400, 700, 100)) +
+    scale_y_continuous(limits = deriv_ylim) +
+    labs(x = "Wavelength (nm)", y = if (show_y) "dR/dλ (%/nm)" else NULL) +
+    theme_minimal(base_size = 11) +
+    theme(panel.grid.minor = element_blank(),
+          axis.title.x = element_text(size = 9.5),
+          axis.text.y = if (show_y) element_text() else element_blank())
+
+  (swatch / refl / deriv) + plot_layout(heights = c(0.7, 3, 2))
+}
+
+cols <- lapply(seq_along(classes), function(i) build_col(classes[i], show_y = (i == 1)))
+p <- wrap_plots(cols, nrow = 1)
+p
+
+if (dir.exists(OUTPUT_DIR)) {
+  fig_base <- file.path(OUTPUT_DIR, "JID_SPF_representative_spectra")
+  ggsave(paste0(fig_base, ".pdf"), p, width = 10, height = 3.5)
+  ggsave(paste0(fig_base, ".png"), p, width = 10, height = 3.5, dpi = 300)
+  ggsave(paste0(fig_base, ".svg"), p, width = 10, height = 3.5)
+}
+```
+
+```{r color_table}
+rep_spectrum %>%
+  transmute(`MI class` = eumelanin_class, MI = round(mi, 1),
+            `sRGB hex` = hex,
+            `L*` = round(L, 1), `a*` = round(a, 1), `b*` = round(b_, 1)) %>%
+  arrange(MI) %>%
+  knitr::kable(caption = "Perceived skin color per representative spectrum, computed from the full 400–700 nm reflectance curve (CIE D65 illuminant, 1931 2° observer): sRGB hex for the swatch and CIELAB coordinates.")
+```
+
+## Software and session information
+
+**Data handling.** `openxlsx` reads the ISSA reflectance workbook; `tidyverse`
+(`dplyr`, `tidyr`, `stringr`, `purrr`, `ggplot2`) does the wrangling, reshaping,
+and plotting; `here` resolves project-relative paths; `patchwork` composes the
+per-class swatch / reflectance / derivative columns into the final figure.
+
+**Spectrum → color.** The perceived skin color is computed with standard
+colorimetry packages:
+
+- **`colorSpec`** — builds the responder (CIE D65 illuminant × CIE 1931 2°
+  standard observer) and integrates each reflectance spectrum to CIE XYZ
+  tristimulus values (`product()`), normalized so a perfect diffuser yields
+  Y = 100.
+- **`spacesRGB`** — converts XYZ to sRGB (`RGBfromXYZ()`) for the color swatches.
+- **`spacesXYZ`** — converts XYZ to CIELAB (`LabfromXYZ()`) for the reported
+  L\*, a\*, b\* coordinates.
+
+```{r session_info}
+sessionInfo()
+```
