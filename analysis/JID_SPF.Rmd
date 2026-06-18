@@ -11,6 +11,7 @@ library(tidyverse)
 library(openxlsx)
 library(here)
 library(patchwork)
+library(KernSmooth)
 library(colorSpec)
 library(spacesXYZ)
 library(spacesRGB)
@@ -96,7 +97,7 @@ spectrum_to_lab <- function(R_percent) {
 }
 ```
 
-```{r representative_spectra, fig.width=10, fig.height=3.5, fig.cap="Representative facial reflectance spectra chosen to span the observed melanin-index range with clear color contrast: the lightest and darkest subjects in the sample as endpoints, plus the nearest real subject to MI ≈ 45, 65, and 85 for the middle (the reflectance curve, derivative, and color swatch all come from the same individual). Top swatch = the perceived skin color for that spectrum (CIE D65 / 1931 2° observer → sRGB). Middle = full 400–700 nm reflectance curve; bottom = its first derivative dR/dλ. y-axes are held constant across classes so magnitudes are comparable. Shaded band = 500–650 nm hemoglobin-feature region."}
+```{r representative_spectra, fig.width=10, fig.height=3.5, fig.cap="Representative facial reflectance spectra chosen to span the observed melanin-index range with clear color contrast: the lightest and darkest subjects in the sample as endpoints, plus the nearest real subject to MI ≈ 45, 65, and 85 for the middle (the reflectance curve, derivative, and color swatch all come from the same individual). Top swatch = the perceived skin color for that spectrum (CIE D65 / 1931 2° observer → sRGB). Middle = full 400–700 nm reflectance curve; bottom = its first derivative dR/dλ, estimated by local polynomial regression (KernSmooth::locpoly, derivative order 1, degree 2; direct plug-in bandwidth dpill × 0.7), matching the derivative method in Pryor et al. (2026). y-axes are held constant across classes so magnitudes are comparable. Shaded band = 500–650 nm hemoglobin-feature region."}
 mi_labels <- c("Low", "Intermediate low", "Intermediate", "Intermediate high", "High")
 pal <- c("Low" = "#0072B2", "Intermediate low" = "#009E73", "Intermediate" = "#E69F00",
          "Intermediate high" = "#D55E00", "High" = "#7F3C8D")
@@ -126,11 +127,21 @@ rep_long <- rep_spectrum %>%
   mutate(wavelength = as.numeric(str_remove(wavelength, "R"))) %>%
   arrange(eumelanin_class, wavelength)
 
-# First derivative dR/dλ (central difference; evenly spaced 10 nm grid)
+# First derivative dR/dλ estimated by local polynomial regression, matching the
+# original analysis in Pryor et al. (2026): KernSmooth::locpoly with derivative
+# order 1, degree 2, and a direct plug-in bandwidth (dpill) scaled by 0.7,
+# evaluated on the measured 10 nm wavelength grid (NOT a finite difference).
 deriv_long <- rep_long %>%
   group_by(eumelanin_class) %>%
-  mutate(deriv = (lead(reflectance) - lag(reflectance)) /
-                 (lead(wavelength)  - lag(wavelength))) %>%
+  group_modify(~{
+    wl  <- .x$wavelength
+    ref <- .x$reflectance
+    bw  <- KernSmooth::dpill(wl, ref) * 0.7
+    est <- KernSmooth::locpoly(x = wl, y = ref, drv = 1, degree = 2,
+                               bandwidth = bw, gridsize = length(wl),
+                               range.x = range(wl))
+    tibble(wavelength = est$x, deriv = est$y)
+  }) %>%
   ungroup()
 
 # Shared (fixed) y-limits across all panels
@@ -209,6 +220,9 @@ rep_spectrum %>%
 (`dplyr`, `tidyr`, `stringr`, `purrr`, `ggplot2`) does the wrangling, reshaping,
 and plotting; `here` resolves project-relative paths; `patchwork` composes the
 per-class swatch / reflectance / derivative columns into the final figure.
+`KernSmooth` (`locpoly`, `dpill`) estimates the first derivative of each
+reflectance spectrum by local polynomial regression, identical to the method in
+the original SkinOptics analysis (Pryor et al., 2026).
 
 **Spectrum → color.** The perceived skin color is computed with standard
 colorimetry packages:
